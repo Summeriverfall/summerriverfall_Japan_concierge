@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>版式 C · 深夜礼宾</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+SC:wght@500;600&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #07080f;
+      --surface:     #0e1019;
+      --gold:        #c9a96e;
+      --gold-dim:    rgba(201,169,110,.13);
+      --gold-border: rgba(201,169,110,.30);
+      --text:        rgba(255,255,255,.88);
+      --muted:       rgba(255,255,255,.40);
+      --border:      rgba(255,255,255,.07);
+      --radius:      14px;
+      --safe-b:      max(1rem, env(safe-area-inset-bottom));
+    }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Kaku Gothic ProN", sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      padding-bottom: calc(5rem + var(--safe-b));
+    }
+
+    /* ambient glow */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 75% 45% at 90% 0%,   rgba(201,169,110,.11) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 35% at 10% 85%,  rgba(201,169,110,.05) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+    /* top gold hairline */
+    body::after {
+      content: '';
+      position: fixed; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold) 40%, var(--gold) 60%, transparent);
+      z-index: 200;
+    }
+
+    /* ── Topbar ─────────────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .7rem 1.2rem;
+      background: rgba(7,8,15,.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.05rem; font-weight: 500;
+      letter-spacing: .12em; color: var(--text);
+    }
+    html[lang="zh-CN"] .brand,
+    html[lang="ja"] .brand {
+      font-family: "Noto Serif SC","Noto Serif JP",serif;
+      font-size: .95rem;
+    }
+
+    .lang-sw { display: flex; gap: .2rem; }
+    .lang-sw button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      font-size: .62rem; font-weight: 700;
+      padding: .28rem .42rem; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+    }
+    .lang-sw button.on {
+      border-color: var(--gold-border);
+      background: var(--gold-dim);
+      color: var(--gold);
+    }
+
+    /* ── Hero ───────────────────────────────────────────── */
+    .hero {
+      padding: 2.2rem 1.25rem 1.8rem;
+      position: relative; z-index: 1;
+    }
+    .prop-tag {
+      display: inline-flex; align-items: center; gap: .45rem;
+      border: 1px solid var(--gold-border);
+      padding: .3rem .7rem; border-radius: 4px;
+      font-size: .64rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1.1rem;
+    }
+    .prop-tag::before {
+      content: '';
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--gold); opacity: .75;
+    }
+    .hero h1 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 2.05rem; font-weight: 500; font-style: italic;
+      line-height: 1.18; letter-spacing: .01em;
+      color: rgba(255,255,255,.92);
+    }
+    html[lang="zh-CN"] .hero h1,
+    html[lang="ja"] .hero h1 {
+      font-family: "Noto Serif SC","Noto Serif JP",serif;
+      font-size: 1.65rem; font-weight: 600; font-style: normal;
+    }
+    .hero-rule {
+      width: 2.2rem; height: 1px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      margin: 1rem 0;
+    }
+    .hero-lead {
+      font-size: .84rem; color: var(--muted);
+      line-height: 1.7; max-width: 26em;
+    }
+    .hero-dist-note {
+      margin-top: .7rem;
+      font-size: .72rem; color: rgba(201,169,110,.55);
+      letter-spacing: .03em;
+    }
+
+    /* ── Category chips ─────────────────────────────────── */
+    .cats {
+      position: sticky; top: 42px; z-index: 90;
+      display: flex; gap: .4rem; overflow-x: auto;
+      padding: .6rem 1.25rem .65rem;
+      background: rgba(7,8,15,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .cats::-webkit-scrollbar { display: none; }
+    .cat {
+      flex: 0 0 auto; white-space: nowrap;
+      padding: .38rem .82rem; border-radius: 999px;
+      font-size: .75rem; border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: inherit;
+    }
+    .cat.on {
+      border-color: var(--gold-border);
+      color: var(--gold); background: var(--gold-dim);
+    }
+
+    /* ── Store cards ─────────────────────────────────────── */
+    .stores {
+      padding: 1.15rem 1.25rem 1rem;
+      display: flex; flex-direction: column; gap: .8rem;
+      position: relative; z-index: 1;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 1rem .95rem .9rem 1.05rem;
+      position: relative; overflow: hidden;
+    }
+    .card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(145deg, rgba(201,169,110,.04) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .card-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: .6rem;
+    }
+    .card-main { flex: 1; min-width: 0; }
+    .card-cat {
+      font-size: .58rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--gold); opacity: .65; margin-bottom: .3rem;
+    }
+    .card-name {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.08rem; font-weight: 500;
+      color: rgba(255,255,255,.92); line-height: 1.25;
+    }
+    html[lang="zh-CN"] .card-name,
+    html[lang="ja"] .card-name {
+      font-family: "Noto Serif SC","Noto Serif JP",serif;
+      font-size: .96rem; font-weight: 600;
+    }
+    .card-dist {
+      flex-shrink: 0; align-self: flex-start;
+      font-size: .68rem; font-weight: 600;
+      color: var(--gold); background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      padding: .28rem .5rem; border-radius: 7px;
+      white-space: nowrap;
+    }
+    .card-desc {
+      font-size: .79rem; color: var(--muted);
+      margin-top: .38rem; line-height: 1.52;
+    }
+    .card-foot {
+      margin-top: .8rem; display: flex; justify-content: flex-end;
+    }
+    .btn-book {
+      font-size: .73rem; font-weight: 700;
+      font-family: inherit; letter-spacing: .04em;
+      color: var(--bg); background: var(--gold);
+      border: none; padding: .38rem .82rem; border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* ── Bottom CTA ──────────────────────────────────────── */
+    .cta-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: .55rem 1.25rem var(--safe-b);
+      background: linear-gradient(to top, rgba(7,8,15,1) 45%, transparent 100%);
+      z-index: 99;
+    }
+    .cta-bar button {
+      width: 100%; padding: .82rem; border-radius: 12px;
+      border: 1px solid var(--gold-border);
+      background: var(--gold-dim); color: var(--gold);
+      font-size: .9rem; font-weight: 600;
+      font-family: inherit; letter-spacing: .04em; cursor: pointer;
+    }
+
+    .stores.filt .card:not(.show) { display: none; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand" id="i-brand"></span>
+    <div class="lang-sw" id="lang-sw" role="group"></div>
+  </header>
+
+  <section class="hero">
+    <div class="prop-tag" id="i-prop-tag"></div>
+    <h1 id="i-h1"></h1>
+    <div class="hero-rule"></div>
+    <p class="hero-lead" id="i-lead"></p>
+    <p class="hero-dist-note" id="i-dnote"></p>
+  </section>
+
+  <div class="cats" id="cats" role="tablist"></div>
+  <div class="stores" id="stores"></div>
+
+  <div class="cta-bar">
+    <button type="button" id="btn-cta"></button>
+  </div>
+
+  <script>
+  (function () {
+    /* ─── Config ─────────────────────────────────── */
+    const LANGS       = ['zh','en','ja'];
+    const LANG_LABEL  = { zh:'中文', en:'EN', ja:'日本語' };
+    const KNOWN_STAYS = ['higashiyama','gion','arashiyama'];
+    const CAT_IDS     = ['all','spa','dining','transfer','whisky','kimono'];
+
+    /* ─── State ──────────────────────────────────── */
+    let lang      = detectLang();
+    let activeCat = 'all';
+    const stayId  = detectStay();
+
+    /* ─── Detection ──────────────────────────────── */
+    function detectLang() {
+      const q = (new URLSearchParams(location.search).get('lang') || '').toLowerCase();
+      if (LANGS.includes(q)) return q;
+      try { const s = localStorage.getItem('bnbHubLang'); if (LANGS.includes(s)) return s; } catch(_){}
+      const nav = (navigator.language || '').toLowerCase();
+      return nav.startsWith('zh') ? 'zh' : nav.startsWith('ja') ? 'ja' : 'en';
+    }
+    function detectStay() {
+      const s = (new URLSearchParams(location.search).get('stay') || '').toLowerCase();
+      return KNOWN_STAYS.includes(s) ? s : null;
+    }
+
+    /* ─── Static data ────────────────────────────── */
+    const PROPERTIES = {
+      higashiyama: { zh:'東山町家', en:'Higashiyama Machiya', ja:'東山町家' },
+      gion:        { zh:'祇園別邸', en:'Gion Bettei',         ja:'祇園別邸' },
+      arashiyama:  { zh:'嵐山山居', en:'Arashiyama Sankyo',   ja:'嵐山山居' },
+    };
+
+    const UI = {
+      zh: {
+        docTitle:    '精选合作体验',
+        brand:       '京都精选',
+        h1:          '精选合作体验',
+        lead:        '我们为入住的客人甄选了按摩疗愈、京都料理、机场专车、威士忌品鉴与和服体验等优质合作商家，如有需要欢迎联系我们代为安排。',
+        dnote:       (p) => p ? `以下距离以 ${p} 为起点估算` : '扫描房间内二维码可查看至各店距离',
+        catLabels:   { all:'全部', spa:'按摩·SPA', dining:'餐厅', transfer:'接送机', whisky:'Whisky', kimono:'和服' },
+        btnCta:      '联系我们预约',
+        btnBook:     '代我预约',
+        alertBook:   '占位：预约入口 (LINE / 表单)。',
+        alertCta:    '占位：全局联系 / 预约。',
+        langAria:    '界面语言',
+      },
+      en: {
+        docTitle:    'Curated Experiences',
+        brand:       'Kyoto Concierge',
+        h1:          'Curated Experiences',
+        lead:        'We hand-pick massage, Kyoto dining, airport transfers, whisky tastings, and kimono experiences for our guests. Just let us know and we\'ll arrange everything.',
+        dnote:       (p) => p ? `Distances from ${p}` : 'Scan the in-room QR code to see distances from your guesthouse',
+        catLabels:   { all:'All', spa:'SPA', dining:'Dining', transfer:'Transfer', whisky:'Bar', kimono:'Experience' },
+        btnCta:      'Book via us',
+        btnBook:     'Book',
+        alertBook:   'Placeholder: booking flow (LINE / form).',
+        alertCta:    'Placeholder: global booking / concierge.',
+        langAria:    'Language',
+      },
+      ja: {
+        docTitle:    '厳選の体験',
+        brand:       '京都コンシェルジュ',
+        h1:          '厳選の体験',
+        lead:        'マッサージ、京料理、空港送迎、ウイスキー体験、着物レンタルなど厳選の提携先をご紹介します。ご希望があれば当社が手配いたします。',
+        dnote:       (p) => p ? `${p}からのおよその距離` : 'お部屋のQRコードをスキャンすると各店までの距離が表示されます',
+        catLabels:   { all:'すべて', spa:'SPA', dining:'レストラン', transfer:'送迎', whisky:'バー', kimono:'体験' },
+        btnCta:      'ご予約のご依頼',
+        btnBook:     '予約',
+        alertBook:   'プレースホルダー：予約（LINE・フォーム）。',
+        alertCta:    'プレースホルダー：コンシェルジュ窓口。',
+        langAria:    '表示言語',
+      },
+    };
+
+    const STORES = [
+      {
+        id:'s1', cat:'spa',
+        zh:{ name:'示例 · 整体与精油护理', desc:'可备注力度与语言偏好（占位）。' },
+        en:{ name:'Sample · body & aroma', desc:'Note pressure or language pref. (placeholder).' },
+        ja:{ name:'サンプル · 整体とアロマ', desc:'強さ・言語希望可（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'约 700m', en:'~700 m', ja:'約700m' },
+          gion:       { zh:'约 1.6km',en:'~1.6 km',ja:'約1.6km' },
+          arashiyama: { zh:'约 9km',  en:'~9 km',  ja:'約9km' },
+        },
+      },
+      {
+        id:'s2', cat:'spa',
+        zh:{ name:'示例 · 足疗专门店', desc:'深夜档视库存而定（占位）。' },
+        en:{ name:'Sample · reflexology', desc:'Late slots subject to availability (placeholder).' },
+        ja:{ name:'サンプル · 足つぼ', desc:'深夜枠は状況次第（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'约 1.0km', en:'~1.0 km', ja:'約1.0km' },
+          gion:       { zh:'约 2.1km', en:'~2.1 km', ja:'約2.1km' },
+          arashiyama: { zh:'约 8.2km', en:'~8.2 km', ja:'約8.2km' },
+        },
+      },
+      {
+        id:'s3', cat:'dining',
+        zh:{ name:'示例 · 京料理会席', desc:'晚餐时段紧张，建议提前 3 天（占位）。' },
+        en:{ name:'Sample · Kyoto kaiseki', desc:'Dinner slots fill quickly—book 3 days ahead (placeholder).' },
+        ja:{ name:'サンプル · 京懐石', desc:'ディナーは3日前の予約推奨（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'约 1.1km', en:'~1.1 km', ja:'約1.1km' },
+          gion:       { zh:'约 1.0km', en:'~1.0 km', ja:'約1.0km' },
+          arashiyama: { zh:'约 11km',  en:'~11 km',  ja:'約11km' },
+        },
+      },
+      {
+        id:'s4', cat:'dining',
+        zh:{ name:'示例 · 居酒屋与本地酒', desc:'适合轻松小酌（占位）。' },
+        en:{ name:'Sample · izakaya & sake', desc:'Great for a relaxed evening (placeholder).' },
+        ja:{ name:'サンプル · 居酒屋と地酒', desc:'気軽な夜向け（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'约 1.8km', en:'~1.8 km', ja:'約1.8km' },
+          gion:       { zh:'约 600m',  en:'~600 m',  ja:'約600m' },
+          arashiyama: { zh:'约 10km',  en:'~10 km',  ja:'約10km' },
+        },
+      },
+      {
+        id:'s5', cat:'transfer',
+        zh:{ name:'示例 · 关空 / 伊丹接送', desc:'举牌迎接、儿童座椅可备注（占位）。' },
+        en:{ name:'Sample · KIX / ITM transfer', desc:'Meet & greet, child seats on request (placeholder).' },
+        ja:{ name:'サンプル · 空港送迎', desc:'名前ボード・チャイルドシート可（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'专车', en:'By car', ja:'車にて' },
+          gion:       { zh:'专车', en:'By car', ja:'車にて' },
+          arashiyama: { zh:'专车', en:'By car', ja:'車にて' },
+        },
+      },
+      {
+        id:'s6', cat:'whisky',
+        zh:{ name:'示例 · Whisky 品鉴会', desc:'小班制品鉴与讲解（占位）。' },
+        en:{ name:'Sample · whisky tasting', desc:'Small-group tasting & talk (placeholder).' },
+        ja:{ name:'サンプル · ウイスキー会', desc:'少人数テイスティング（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'约 1.4km', en:'~1.4 km', ja:'約1.4km' },
+          gion:       { zh:'约 2.0km', en:'~2.0 km', ja:'約2.0km' },
+          arashiyama: { zh:'约 10km',  en:'~10 km',  ja:'約10km' },
+        },
+      },
+      {
+        id:'s7', cat:'kimono',
+        zh:{ name:'示例 · 和服租赁与跟拍', desc:'含发型方案，旺季建议上午（占位）。' },
+        en:{ name:'Sample · kimono & photos', desc:'Hair styling included; AM slots in peak season (placeholder).' },
+        ja:{ name:'サンプル · 着物＋撮影', desc:'ヘアセット込み、繁忙期は午前推奨（プレースホルダー）。' },
+        dist:{
+          higashiyama:{ zh:'约 800m', en:'~800 m', ja:'約800m' },
+          gion:       { zh:'约 450m', en:'~450 m', ja:'約450m' },
+          arashiyama: { zh:'约 12km', en:'~12 km', ja:'約12km' },
+        },
+      },
+    ];
+
+    /* ─── Helpers ──────────────────────────────────── */
+    function L()  { return UI[lang]; }
+    function propName() { return stayId ? PROPERTIES[stayId][lang] : null; }
+    function getDist(store) {
+      if (!stayId) return '—';
+      return (store.dist[stayId] || {})[lang] || '—';
+    }
+
+    /* ─── DOM refs ─────────────────────────────────── */
+    const $brand   = document.getElementById('i-brand');
+    const $prop    = document.getElementById('i-prop-tag');
+    const $h1      = document.getElementById('i-h1');
+    const $lead    = document.getElementById('i-lead');
+    const $dnote   = document.getElementById('i-dnote');
+    const $cats    = document.getElementById('cats');
+    const $stores  = document.getElementById('stores');
+    const $btnCta  = document.getElementById('btn-cta');
+    const $langSw  = document.getElementById('lang-sw');
+
+    /* ─── Renders ──────────────────────────────────── */
+    function renderChrome() {
+      const u = L();
+      document.title               = u.docTitle;
+      $brand.textContent           = u.brand;
+      $h1.textContent              = u.h1;
+      $lead.textContent            = u.lead;
+      $dnote.textContent           = u.dnote(propName());
+      $btnCta.textContent          = u.btnCta;
+      $langSw.setAttribute('aria-label', u.langAria);
+      // property tag
+      const pn = propName();
+      if (pn) { $prop.textContent = pn; $prop.hidden = false; }
+      else    { $prop.hidden = true; }
+    }
+
+    function renderLangButtons() {
+      $langSw.innerHTML = '';
+      LANGS.forEach(code => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = LANG_LABEL[code];
+        b.className = code === lang ? 'on' : '';
+        b.setAttribute('aria-pressed', code === lang ? 'true' : 'false');
+        b.addEventListener('click', () => setLang(code));
+        $langSw.appendChild(b);
+      });
+    }
+
+    function renderCats() {
+      $cats.innerHTML = '';
+      const labels = L().catLabels;
+      CAT_IDS.forEach(id => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.setAttribute('role','tab');
+        b.className = 'cat' + (id === activeCat ? ' on' : '');
+        b.textContent = labels[id]; b.dataset.cat = id;
+        $cats.appendChild(b);
+      });
+    }
+
+    function renderStores() {
+      $stores.innerHTML = '';
+      const u = L();
+      STORES.forEach(store => {
+        const c = store[lang];
+        const d = getDist(store);
+        const catLabel = u.catLabels[store.cat];
+        const card = document.createElement('article');
+        card.className = 'card show'; card.dataset.cat = store.cat;
+        card.innerHTML =
+          '<div class="card-head">' +
+            '<div class="card-main">' +
+              '<p class="card-cat">' + catLabel + '</p>' +
+              '<h2 class="card-name">' + c.name + '</h2>' +
+            '</div>' +
+            '<span class="card-dist">' + d + '</span>' +
+          '</div>' +
+          '<p class="card-desc">' + c.desc + '</p>' +
+          '<div class="card-foot"><button type="button" class="btn-book" data-book>' + u.btnBook + '</button></div>';
+        $stores.appendChild(card);
+      });
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const on = activeCat !== 'all';
+      $stores.classList.toggle('filt', on);
+      $stores.querySelectorAll('.card').forEach(c => {
+        c.classList.toggle('show', !on || c.dataset.cat === activeCat);
+      });
+    }
+
+    /* ─── setLang ──────────────────────────────────── */
+    function setLang(next) {
+      if (!LANGS.includes(next)) return;
+      lang = next;
+      try { localStorage.setItem('bnbHubLang', lang); } catch(_){}
+      const u = new URL(location.href);
+      u.searchParams.set('lang', lang);
+      history.replaceState(null, '', u.pathname + u.search);
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang === 'ja' ? 'ja' : 'en';
+      renderChrome(); renderLangButtons(); renderCats(); renderStores();
+    }
+
+    /* ─── Events ───────────────────────────────────── */
+    $cats.addEventListener('click', e => {
+      const b = e.target.closest('.cat'); if (!b) return;
+      activeCat = b.dataset.cat || 'all';
+      renderCats(); applyFilter();
+    });
+    $stores.addEventListener('click', e => {
+      if (e.target.matches('[data-book]')) alert(L().alertBook);
+    });
+    $btnCta.addEventListener('click', () => alert(L().alertCta));
+
+    /* ─── Init ─────────────────────────────────────── */
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang === 'ja' ? 'ja' : 'en';
+    renderChrome(); renderLangButtons(); renderCats(); renderStores();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+════════════════════════════════════════════════════
+ 门店 ↔ 图片 对照表（concierge/images/ 文件夹）
+════════════════════════════════════════════════════
+
+【使用说明】
+1. 所有门店图片放在 services/concierge/images/ 文件夹里
+2. 文件名 = 下表「图片名」+ 后缀，.jpg / .png / .webp 都可以
+   （页面会自动按 jpg → png → webp 的顺序尝试加载）
+3. 新增门店后记得同步更新本表
+4. 建议图片：横版，比例约 16:10，宽度 800px 以上
+
+──────────────────────────────────────
+ SPA / 按摩
+──────────────────────────────────────
+Starry Flow Spa                 → starry
+Massage Salon Oasis             → oasis
+COMFORT SPACE リラクゼーション   → comfort
+Relaxation Ruana                → ruana
+Selene Spa                      → selene
+祇园·LUNA SPA                   → luna
+花香(KAKO) Relaxation Salon     → kako
+Hanayiro（花の色）              → hanayiro
+POLA 1ST                        → pola
+
+──────────────────────────────────────
+ 餐厅
+──────────────────────────────────────
+焼肉処 竜宝                     → ryuho
+鰻・割烹 戸石                   → toishi
+火焱山炭火串焼 羊肉串           → bbq
+十祇家 木屋町御池               → togiya
+飲茶 柏三葉 西陣店              → dimsum
+がんこ 高瀬川二条苑             → ganko
+京焼肉 新 先斗町店              → shin
+お料理 晩boo 本店               → bamboo
+祇園あさくら                    → asakura
+個室焼肉 萬                     → yorozu
+鳥久                            → torihisa
+招牌餐厅「八坂」（柏悦酒店）    → yasaka
+天ぷら圓堂 八坂本店 北邸        → endo
+とんかつ寿樹 三条神宮道店       → juju
+
+──────────────────────────────────────
+ 接送
+──────────────────────────────────────
+关西机场专车接送                → airport
+
+──────────────────────────────────────
+ 酒吧
+──────────────────────────────────────
+お酒の美術館 四条大宮店         → museum
+Bar AG                          → barag
+MALACANANG UNLIMITED            → malacanang
+ZAZA Pub Kyoto                  → zaza
+Macho Bar 京都店                → macho
+K36 The Bar & Rooftop           → k36
+
+──────────────────────────────────────
+ 体验（和服等）
+──────────────────────────────────────
+十六夜和服租赁                  → izayoi
+Vintage Japanese Whisky Tasting → vintage
+晨间茶道体验                    → tea
+
+合作文化体验（截图请保存为下表「图片名」+ .jpg / .png / .webp，放入 services/concierge/images/）
+京都寺庙坐禅冥想                → exp-zazen
+水引（Mizuhiki）结绳手作        → exp-mizuhiki
+京都传统日式婚礼体验            → exp-wedding
+寿司制作体验                    → exp-sushi
+京都传统武士文化体验            → exp-samurai
+京都城市漫步（导览）            → exp-citywalk
+健康养生与冥想                  → exp-wellness
+手绘友禅染绘体验                → exp-yuzen
+迷你和伞制作体验                → exp-wagasa
+浴衣・和服租赁体验              → exp-yukata
+京都视频旅拍体验                → exp-videoshoot
+日本传统手工艺品体验            → exp-crafts
+町屋友禅染艺术体验              → exp-machiya-yuzen
+金箔彩绘与和服体验              → exp-kinpaku
+
+──────────────────────────────────────
+ 页面素材（不是门店图）
+──────────────────────────────────────
+首页地图背景                    → map-bg.png（在 concierge/ 根目录）

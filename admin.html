@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>门店管理 · bnb-partner-hub</title>
+  <script src="stores.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand:    #0f766e;
+      --brand-dk: #134e4a;
+      --bg:       #f0f4f3;
+      --surface:  #fff;
+      --line:     #dfe8e5;
+      --ink:      #14221f;
+      --muted:    #5a7068;
+      --red:      #dc2626;
+      --tag-bg:   #e2efed;
+      --radius:   10px;
+    }
+    body {
+      background: var(--bg); color: var(--ink);
+      font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+      font-size: 14px; line-height: 1.5;
+    }
+
+    /* ── 顶栏 ───────────────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--brand-dk); color: #fff;
+      padding: .75rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .topbar h1 { font-size: .95rem; font-weight: 700; letter-spacing: .04em; }
+    .topbar-actions { display: flex; gap: .5rem; }
+    .btn {
+      padding: .45rem .9rem; border-radius: 8px; border: none;
+      font-size: .82rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; display: inline-flex; align-items: center; gap: .3rem;
+    }
+    .btn-primary { background: #fff; color: var(--brand-dk); }
+    .btn-ghost   { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.25); }
+    .btn-sm      { padding: .32rem .65rem; font-size: .76rem; border-radius: 7px; }
+    .btn-danger  { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+    .btn-green   { background: #f0fdf4; color: #15803d; border: 1px solid rgba(21,128,61,.25); }
+
+    /* ── 提示栏 ─────────────────────────────────────────── */
+    .notice {
+      margin: 1rem 1.5rem 0; padding: .75rem 1rem;
+      background: #fef9c3; border: 1px solid #fde68a; border-radius: var(--radius);
+      font-size: .82rem; color: #92400e; line-height: 1.6;
+    }
+    .notice strong { font-weight: 700; }
+
+    /* ── 门店列表 ────────────────────────────────────────── */
+    #store-list {
+      padding: 1rem 1.5rem 4rem;
+      display: flex; flex-direction: column; gap: .85rem;
+      max-width: 900px; margin: 0 auto;
+    }
+
+    /* ── 门店卡片 ────────────────────────────────────────── */
+    .s-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      overflow: hidden;
+    }
+    .s-head {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .7rem .85rem;
+      background: var(--bg); border-bottom: 1px solid var(--line);
+      cursor: pointer; user-select: none;
+    }
+    .s-head:hover { background: #e8eeec; }
+    .cat-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    [data-cat="spa"]      .cat-dot { background: #7c3aed; }
+    [data-cat="dining"]   .cat-dot { background: #ea580c; }
+    [data-cat="transfer"] .cat-dot { background: #0284c7; }
+    [data-cat="whisky"]   .cat-dot { background: #b45309; }
+    [data-cat="kimono"]   .cat-dot { background: #be185d; }
+    .s-title { font-weight: 700; flex: 1; font-size: .9rem; }
+    .s-chevron { color: var(--muted); font-size: .8rem; transition: transform .2s; }
+    .s-card.open .s-chevron { transform: rotate(90deg); }
+
+    .s-body { display: none; padding: 1rem; }
+    .s-card.open .s-body { display: block; }
+
+    /* ── 字段组 ─────────────────────────────────────────── */
+    .field-row {
+      display: grid; grid-template-columns: 120px 1fr; gap: .4rem;
+      align-items: start; margin-bottom: .55rem;
+    }
+    .field-row label {
+      font-size: .76rem; font-weight: 600; color: var(--muted);
+      padding-top: .45rem;
+    }
+    .field-row input, .field-row textarea, .field-row select {
+      width: 100%; padding: .42rem .6rem;
+      border: 1.5px solid var(--line); border-radius: 7px;
+      font-size: .84rem; font-family: inherit; color: var(--ink);
+      background: #fff; outline: none; resize: vertical;
+    }
+    .field-row input:focus, .field-row textarea:focus, .field-row select:focus {
+      border-color: var(--brand);
+    }
+    .field-row textarea { min-height: 58px; }
+    .field-hint { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+
+    .section-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--brand);
+      margin: .9rem 0 .55rem; padding-bottom: .3rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    /* ── 距离格子 ────────────────────────────────────────── */
+    .stay-grid {
+      display: grid; grid-template-columns: 80px 1fr; gap: .35rem .5rem;
+      align-items: center; margin-bottom: .55rem;
+    }
+    .stay-grid label { font-size: .78rem; color: var(--muted); font-weight: 600; }
+
+    /* ── 语言预览区 ──────────────────────────────────────── */
+    .lang-section {
+      margin-top: .6rem; border: 1px solid var(--line);
+      border-radius: 8px; overflow: hidden;
+    }
+    .lang-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .5rem .75rem; background: var(--bg);
+      cursor: pointer; font-size: .8rem; font-weight: 600;
+      border-bottom: 1px solid transparent;
+      user-select: none;
+    }
+    .lang-toggle:hover { background: #e8eeec; }
+    .lang-toggle.open { border-bottom-color: var(--line); }
+    .lang-content { display: none; padding: .75rem; }
+    .lang-content.open { display: block; }
+
+    .translate-bar {
+      display: flex; gap: .5rem; align-items: center;
+      margin: .75rem 0;
+    }
+    .translate-status { font-size: .78rem; color: var(--muted); flex: 1; }
+
+    /* ── 图片预览 ────────────────────────────────────────── */
+    .img-preview {
+      width: 64px; height: 72px; border-radius: 8px;
+      object-fit: cover; border: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .img-row { display: flex; gap: .65rem; align-items: flex-start; }
+    .img-row > div { flex: 1; }
+
+    /* ── 新增按钮 ────────────────────────────────────────── */
+    #add-btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: .5rem; padding: .75rem;
+      background: var(--surface); border: 2px dashed var(--line);
+      border-radius: var(--radius); color: var(--muted);
+      font-size: .88rem; font-weight: 600; cursor: pointer;
+      width: 100%; font-family: inherit;
+    }
+    #add-btn:hover { background: #e8eeec; border-color: var(--brand); color: var(--brand); }
+
+    /* ── 导入模态 ─────────────────────────────────────────── */
+    .import-url-box {
+      display: flex; gap: .45rem; align-items: center;
+      border: 2px solid var(--line); border-radius: 12px;
+      padding: .5rem .75rem; background: var(--bg);
+      transition: border-color .2s;
+    }
+    .import-url-box:focus-within { border-color: var(--brand); }
+    .import-url-box input {
+      flex: 1; border: none; background: transparent;
+      font-size: .9rem; outline: none; font-family: inherit; color: var(--ink);
+      padding: .25rem 0;
+    }
+    .import-url-box input::placeholder { color: var(--muted); }
+    .import-status {
+      margin-top: .75rem; padding: .65rem .85rem; border-radius: 9px;
+      font-size: .8rem; line-height: 1.55;
+    }
+    .import-status.loading { background: #eff6ff; color: #1d4ed8; }
+    .import-status.error   { background: #fef2f2; color: var(--red); }
+    .import-status.success { background: #f0fdf4; color: #15803d; }
+    .preview-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .45rem .85rem;
+      margin-top: .75rem; font-size: .8rem;
+    }
+    .preview-grid dt { color: var(--muted); font-weight: 600; }
+    .preview-grid dd { color: var(--ink); }
+    .api-key-banner {
+      margin-top: .75rem; padding: .6rem .85rem;
+      background: #fef9c3; border: 1px solid #fde68a; border-radius: 9px;
+      font-size: .78rem; color: #92400e;
+    }
+    .api-key-banner a { color: #b45309; }
+    /* settings modal */
+    .api-key-field {
+      display: flex; gap: .4rem; align-items: center; margin-top: .6rem;
+    }
+    .api-key-field input {
+      flex: 1; padding: .48rem .65rem; border: 1.5px solid var(--line);
+      border-radius: 8px; font-size: .86rem; font-family: inherit; outline: none;
+    }
+    .api-key-field input:focus { border-color: var(--brand); }
+
+    /* ── 导出预览模态 ─────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 14px;
+      width: min(92vw, 680px); max-height: 82vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,.25);
+    }
+    .modal-head {
+      padding: 1rem 1.25rem .85rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-head h2 { font-size: .95rem; font-weight: 700; }
+    /* 模态框内的关闭按钮：深色背景专用 ghost 样式在白色框里不可见，覆盖为深色 */
+    .modal-head .btn-ghost {
+      background: var(--bg); color: var(--muted);
+      border: 1px solid var(--line);
+    }
+    .modal-head .btn-ghost:hover { background: var(--line); }
+    .modal-body { flex: 1; overflow-y: auto; padding: .85rem 1.25rem; }
+    .modal-foot {
+      padding: .75rem 1.25rem;
+      border-top: 1px solid var(--line);
+      display: flex; gap: .5rem; justify-content: flex-end;
+    }
+    #export-code {
+      width: 100%; height: 280px; font-family: "Courier New", monospace;
+      font-size: .75rem; border: 1px solid var(--line); border-radius: 7px;
+      padding: .75rem; resize: none; color: var(--ink); background: #fafafa;
+    }
+
+    /* ── Tab 导航 ────────────────────────────────────── */
+    .tab-nav {
+      position: sticky; top: 3.15rem; z-index: 95;
+      display: flex; background: var(--surface);
+      border-bottom: 2px solid var(--line);
+      padding: 0 1.5rem;
+    }
+    .tab-nav-btn {
+      padding: .6rem 1rem; border: none; background: transparent;
+      font-size: .84rem; font-weight: 700; cursor: pointer;
+      color: var(--muted); border-bottom: 3px solid transparent;
+      margin-bottom: -2px; font-family: inherit; line-height: 1;
+    }
+    .tab-nav-btn.on { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab-pane { display: none; }
+    .tab-pane.on { display: block; }
+
+    /* ── 民宿管理 ────────────────────────────────────── */
+    #prop-manager {
+      padding: 1rem 1.5rem 4rem;
+      max-width: 900px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: .85rem;
+    }
+    .prop-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--line); overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .prop-head {
+      display: flex; align-items: center;
+      justify-content: space-between; padding: .7rem .85rem;
+      background: var(--bg); border-bottom: 1px solid var(--line);
+      cursor: pointer; user-select: none;
+    }
+    .prop-head:hover { background: #e8eeec; }
+    .prop-head-l { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; }
+    .prop-head-r { display: flex; align-items: center; gap: .5rem; }
+    .prop-name-lbl { font-weight: 700; font-size: .9rem; }
+    .prec-badge {
+      font-size: .62rem; font-weight: 700;
+      padding: .13rem .38rem; border-radius: 5px; white-space: nowrap;
+    }
+    .prec-badge.ok  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .prec-badge.est { background: #fef9c3; color: #92400e; border: 1px solid #fde68a; }
+    .prop-chev { color: var(--muted); font-size: .8rem; transition: transform .2s; flex-shrink: 0; }
+    .prop-card.open .prop-chev { transform: rotate(90deg); }
+    .prop-body { display: none; padding: 1rem; }
+    .prop-card.open .prop-body { display: block; }
+    .coord-row {
+      font-size: .8rem; color: var(--muted);
+      padding: .3rem 0 .05rem; display: flex; align-items: center; gap: .4rem;
+    }
+    .coord-val { font-weight: 700; color: var(--ink); }
+    .add-prop-btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: .5rem; padding: .75rem;
+      background: var(--surface); border: 2px dashed var(--line);
+      border-radius: var(--radius); color: var(--muted);
+      font-size: .88rem; font-weight: 600; cursor: pointer;
+      width: 100%; font-family: inherit;
+    }
+    .add-prop-btn:hover { background: #e8eeec; border-color: var(--brand); color: var(--brand); }
+    .prop-footer-note { font-size: .76rem; color: var(--muted); text-align: center; padding: .5rem 1rem; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🏡 Concierge 管理后台</h1>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost btn-sm" id="settings-btn">⚙ API 设置</button>
+    <button class="btn btn-ghost btn-sm" id="translate-all-btn">🌐 全部翻译</button>
+    <button class="btn btn-primary btn-sm" id="import-open-btn">＋ 导入门店</button>
+    <button class="btn btn-ghost btn-sm" id="export-btn">📥 导出</button>
+  </div>
+</div>
+
+<!-- Tab 导航 -->
+<div class="tab-nav" id="main-tab-nav">
+  <button class="tab-nav-btn on" data-tab="stores" type="button">🏪 门店管理</button>
+  <button class="tab-nav-btn" data-tab="properties" type="button">🏡 民宿管理</button>
+</div>
+
+<!-- ── Tab: 门店管理 ──────────────────────────────── -->
+<div class="tab-pane on" id="tab-stores">
+  <div class="notice" id="notice-bar">
+    <strong>快速流程：</strong>
+    点「＋ 导入门店」→ 粘贴 Google Maps 链接 → 自动获取信息 → 上传图片 → 导出。
+    设置 Google Places API Key 后可自动获取营业时间和描述（⚙ API 设置）。
+  </div>
+  <div id="store-list"></div>
+</div>
+
+<!-- ── Tab: 民宿管理 ──────────────────────────────── -->
+<div class="tab-pane" id="tab-properties">
+  <div id="prop-manager">
+    <div id="prop-list"></div>
+    <button type="button" id="add-prop-btn" class="add-prop-btn">＋ 新增民宿点位</button>
+    <p class="prop-footer-note">
+      修改坐标后点「重新计算距离」→ 切换到「门店管理」→ 导出 stores.js 即可生效。<br>
+      新增民宿后，复制 higa.html 改文件名，把 detectStay() 末尾的默认值改为新 ID。
+    </p>
+  </div>
+</div>
+
+<!-- 导入模态窗 -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h2>🔍 从 Google Maps 导入门店</h2>
+      <button class="btn btn-ghost btn-sm" id="import-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">
+        粘贴 Google Maps 链接，自动获取店名、位置、分类和各民宿距离。
+      </p>
+      <div class="import-url-box">
+        <span style="font-size:.9rem;color:var(--muted)">🔗</span>
+        <input type="url" id="import-url-input" placeholder="https://www.google.com/maps/place/... 或 Embed URL">
+        <button class="btn btn-primary btn-sm" id="import-fetch-btn">获取</button>
+      </div>
+      <div class="import-status" id="import-status" style="display:none"></div>
+      <div id="import-preview" style="display:none">
+        <dl class="preview-grid" id="import-preview-data"></dl>
+        <div class="api-key-banner" id="import-api-hint" style="display:none">
+          💡 设置 Google Places API Key 后可自动填写营业时间和简介。
+          <a href="#" id="import-go-settings">立即设置 →</a>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot" id="import-foot" style="display:none">
+      <button class="btn btn-ghost btn-sm" id="import-again">↩ 重新输入</button>
+      <button class="btn btn-primary btn-sm" id="import-confirm">✓ 创建门店</button>
+    </div>
+  </div>
+</div>
+
+<!-- API Key 设置模态 -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <h2>⚙ Google Places API Key</h2>
+      <button class="btn btn-ghost btn-sm" id="settings-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--muted);line-height:1.65;margin-bottom:.65rem">
+        设置后可从 Google Maps 自动获取营业时间、简介和分类标签，无需手动填写。
+      </p>
+      <p style="font-size:.8rem;line-height:1.65;margin-bottom:.75rem">
+        <strong>申请步骤（免费）：</strong><br>
+        ① 打开 <a href="https://console.cloud.google.com" target="_blank" style="color:var(--brand)">console.cloud.google.com</a><br>
+        ② 创建项目 → 左侧「API 和服务」→「启用 API」→ 搜索并启用 <strong>Places API</strong><br>
+        ③ 「凭据」→「创建凭据」→「API 密钥」→ 复制密钥粘贴到下方<br>
+        ④ 每月有 $200 免费额度，日常用量完全够用
+      </p>
+      <div class="api-key-field">
+        <input type="text" id="api-key-input" placeholder="AIza...">
+        <button class="btn btn-primary btn-sm" id="api-key-save">保存</button>
+        <button class="btn btn-danger btn-sm" id="api-key-clear">清除</button>
+      </div>
+      <p id="api-key-status" style="font-size:.75rem;margin-top:.45rem;color:var(--muted)"></p>
+    </div>
+  </div>
+</div>
+
+<!-- 隐藏容器供 Places API 使用 -->
+<div id="places-service-el" style="display:none"></div>
+
+<!-- 导出模态窗 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>导出 stores.js</h2>
+      <button class="btn btn-ghost btn-sm" id="modal-close">✕ 关闭</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.65rem">
+        复制下方内容，或点「下载」按钮，然后覆盖项目目录里的 <code>stores.js</code> 文件。
+      </p>
+      <textarea id="export-code" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" id="copy-btn">📋 复制</button>
+      <button class="btn btn-primary btn-sm" id="download-btn">⬇ 下载 stores.js</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   工具：Google 免费翻译 API（无需 Key）
+═══════════════════════════════════════════════════════════ */
+async function gTranslate(text, tl) {
+  if (!text || !text.trim()) return text;
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    return d[0].map(x => x[0]).join('').trim();
+  } catch(e) {
+    console.warn('翻译失败:', e);
+    return text;
+  }
+}
+
+/* 距离文本的规则化翻译（更准确）*/
+function translateFromStay(zh) {
+  const walkM  = zh.match(/步行(\d+)分/);
+  if (walkM)  return { en: `${walkM[1]} min walk`,       ja: `徒歩${walkM[1]}分` };
+  const trainM = zh.match(/电车约(\d+)分/);
+  if (trainM) return { en: `~${trainM[1]} min by train`, ja: `電車約${trainM[1]}分` };
+  const carM  = zh.match(/专车|民宿门口/);
+  if (carM)   return { en: 'From your door',             ja: '玄関前発' };
+  return null; // 回退到机器翻译
+}
+
+/* 翻译一个门店对象（只翻缺失的字段）*/
+async function translateStore(data, statusEl) {
+  const update = t => { if (statusEl) statusEl.textContent = t; };
+  update('翻译店名…');
+
+  const nameEN = await gTranslate(data.zh.name, 'en');
+  const nameJA = await gTranslate(data.zh.name, 'ja');
+  update('翻译地区…');
+  const areaEN = await gTranslate(data.zh.area, 'en');
+  const areaJA = await gTranslate(data.zh.area, 'ja');
+  update('翻译描述…');
+  const descEN = await gTranslate(data.zh.desc, 'en');
+  const descJA = await gTranslate(data.zh.desc, 'ja');
+  update('翻译标签…');
+  const tagsEN = [];
+  const tagsJA = [];
+  for (const t of data.zh.tags) {
+    tagsEN.push(await gTranslate(t, 'en'));
+    tagsJA.push(await gTranslate(t, 'ja'));
+  }
+  update('翻译营业时间…');
+  const hoursEN = /^[\d:–\-~A-Za-z ]+$/.test(data.zh.hours) ? data.zh.hours : await gTranslate(data.zh.hours, 'en');
+  const hoursJA = /^[\d:–\-~A-Za-z ]+$/.test(data.zh.hours) ? data.zh.hours : await gTranslate(data.zh.hours, 'ja');
+  update('翻译距离…');
+  for (const k of ['higashiyama', 'gion', 'arashiyama']) {
+    const zh = data.fromStay[k].zh;
+    const auto = translateFromStay(zh);
+    if (auto) {
+      data.fromStay[k].en = auto.en;
+      data.fromStay[k].ja = auto.ja;
+    } else {
+      data.fromStay[k].en = await gTranslate(zh, 'en');
+      data.fromStay[k].ja = await gTranslate(zh, 'ja');
+    }
+  }
+
+  data.en = { name: nameEN, area: areaEN, desc: descEN, tags: tagsEN, hours: hoursEN };
+  data.ja = { name: nameJA, area: areaJA, desc: descJA, tags: tagsJA, hours: hoursJA };
+  update('翻译完成 ✓');
+  return data;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   API Key 管理
+═══════════════════════════════════════════════════════════ */
+let gApiKey = '';
+try { gApiKey = localStorage.getItem('bnbAdminGApiKey') || ''; } catch(_){}
+
+document.getElementById('settings-btn').addEventListener('click', () => {
+  document.getElementById('api-key-input').value = gApiKey;
+  document.getElementById('api-key-status').textContent = gApiKey ? '✅ 当前已设置 API Key' : '未设置';
+  document.getElementById('settings-modal').classList.add('open');
+});
+document.getElementById('settings-close').addEventListener('click', () =>
+  document.getElementById('settings-modal').classList.remove('open'));
+
+document.getElementById('api-key-save').addEventListener('click', () => {
+  gApiKey = document.getElementById('api-key-input').value.trim();
+  try { localStorage.setItem('bnbAdminGApiKey', gApiKey); } catch(_){}
+  document.getElementById('api-key-status').textContent = gApiKey ? '✅ 已保存' : '已清空';
+  gmapsLoaded = false; // 重置，以便用新 key 重新加载
+});
+document.getElementById('api-key-clear').addEventListener('click', () => {
+  gApiKey = '';
+  try { localStorage.removeItem('bnbAdminGApiKey'); } catch(_){}
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('api-key-status').textContent = '已清除';
+});
+
+/* ═══════════════════════════════════════════════════════════
+   民宿点位数据 — 从 stores.js 的 window.PROPERTIES 加载
+   可在「民宿管理」标签页编辑，导出时一并保存回 stores.js
+═══════════════════════════════════════════════════════════ */
+let PROPERTIES_DATA = JSON.parse(JSON.stringify(window.PROPERTIES || []));
+
+// 向后兼容：生成 { id: {lat, lon} } 格式供距离计算使用
+function getPropCoords() {
+  const m = {};
+  PROPERTIES_DATA.forEach(p => { if (p.lat && p.lon) m[p.id] = { lat: p.lat, lon: p.lon }; });
+  return m;
+}
+
+/* Haversine 公式：两点球面距离（km）*/
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toR, dLon = (lon2 - lon1) * toR;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * toR) * Math.cos(lat2 * toR) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/* 距离 → 行程时间文本
+   步行: 80m/min (4.8km/h)；超过 2km 建议电车 */
+function estimateTravel(km) {
+  const m = Math.round(km * 1000);
+  if (km < 2) {
+    const min = Math.max(1, Math.round(m / 80));
+    return { zh: `步行约${min}分`, en: `~${min} min walk`, ja: `徒歩約${min}分` };
+  }
+  // 电车: 平均 20km/h + 候车约 5 分
+  const min = Math.round(km / 20 * 60) + 5;
+  return { zh: `电车约${min}分`, en: `~${min} min by train`, ja: `電車約${min}分` };
+}
+
+/* 从 Google Maps URL 提取经纬度
+   支持格式：
+   - 完整 URL：.../@35.0012,135.7821,17z
+   - Embed URL：...!3d35.01021!2d135.77801...
+   - ?q=35.0012,135.7821
+   不支持：maps.app.goo.gl 短链（需先在浏览器打开后复制完整 URL）*/
+function extractCoords(url) {
+  // @lat,lon（最常见）
+  let m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return { lat: +m[1], lon: +m[2] };
+  // Embed !3d=lat !2d=lon
+  const latM = url.match(/[!]3d(-?\d+\.\d+)/);
+  const lonM = url.match(/[!]2d(-?\d+\.\d+)/);
+  if (latM && lonM) return { lat: +latM[1], lon: +lonM[1] };
+  // ?q=lat,lon 或 ?query=lat,lon
+  m = url.match(/[?&](?:q|query|ll)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+  if (m) return { lat: +m[1], lon: +m[2] };
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Nominatim 反向地理编码（免费，获取区域名称）
+═══════════════════════════════════════════════════════════ */
+async function nominatimReverse(lat, lon) {
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh-CN,ja,en`;
+  const r = await fetch(url, { headers: { 'User-Agent': 'bnb-partner-hub-admin/1.0' } });
+  return r.json();
+}
+function pickArea(geo) {
+  const a = geo?.address || {};
+  return a.neighbourhood || a.suburb || a.city_district || a.quarter || a.road || '';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Google Maps JS API 动态加载（Places API）
+═══════════════════════════════════════════════════════════ */
+let gmapsLoaded = false;
+function loadGmaps() {
+  return new Promise((resolve, reject) => {
+    if (gmapsLoaded && window.google?.maps?.places) { resolve(); return; }
+    // 移除旧脚本（换 key 时）
+    const old = document.getElementById('gmaps-script');
+    if (old) old.remove();
+    const s = document.createElement('script');
+    s.id = 'gmaps-script';
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${gApiKey}&libraries=places`;
+    s.async = true;
+    s.onload = () => { gmapsLoaded = true; resolve(); };
+    s.onerror = () => reject(new Error('Google Maps API 加载失败，请检查 API Key'));
+    document.head.appendChild(s);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Google Places API：根据坐标和名称获取详细信息
+═══════════════════════════════════════════════════════════ */
+async function fetchPlaceDetails(name, lat, lon) {
+  await loadGmaps();
+  return new Promise((resolve, reject) => {
+    const svc = new google.maps.places.PlacesService(document.getElementById('places-service-el'));
+    svc.textSearch({
+      query: name,
+      location: new google.maps.LatLng(lat, lon),
+      radius: 500,
+    }, (results, st) => {
+      if (st !== 'OK' || !results?.length) { reject(new Error(`未找到「${name}」，请检查坐标或名称`)); return; }
+      svc.getDetails({
+        placeId: results[0].place_id,
+        fields: ['name', 'opening_hours', 'types', 'editorial_summary', 'formatted_address'],
+      }, (place, st2) => {
+        if (st2 !== 'OK') { reject(new Error('获取详情失败')); return; }
+        resolve(place);
+      });
+    });
+  });
+}
+
+/* Google place types → 我们的分类 */
+function typesToCat(types = []) {
+  const t = types.join(' ');
+  if (/spa|beauty_salon|physiotherapist/.test(t)) return 'spa';
+  if (/clothing_store/.test(t)) return 'kimono';
+  if (/bar|night_club|liquor_store/.test(t)) return 'whisky';
+  if (/transit_station|taxi_stand|travel_agency|car_rental/.test(t)) return 'transfer';
+  if (/restaurant|food|meal|bakery|cafe/.test(t)) return 'dining';
+  return null;
+}
+/* Google opening_hours → "HH:MM–HH:MM" */
+function parseHours(oh) {
+  if (!oh?.periods?.length) return '';
+  const p = oh.periods[0];
+  if (!p?.open || !p?.close) return '';
+  const fmt = t => t.replace(/(\d{2})(\d{2})/, '$1:$2');
+  return fmt(p.open.time) + '–' + fmt(p.close.time);
+}
+/* Google types → 默认中文标签 */
+const CAT_DEFAULT_TAGS = {
+  spa:      ['中文可沟通', '需预约'],
+  dining:   ['预约制', '家庭友好'],
+  whisky:   ['品鉴会', '小团'],
+  kimono:   ['含发型', '外景拍摄'],
+  transfer: ['中文司机', '儿童座椅'],
+};
+
+/* 从名称关键词猜测分类（无 API 时使用）*/
+function guessCat(name) {
+  const n = name.toLowerCase();
+  if (/マッサージ|整体|spa|スパ|足|リラク|massage|按摩|spa/.test(n)) return 'spa';
+  if (/着物|きもの|和服|kimono/.test(n)) return 'kimono';
+  if (/ウイスキー|whisky|whiskey|バー|bar|ウィスキー/.test(n)) return 'whisky';
+  if (/送迎|タクシー|transfer|交通|shuttle/.test(n)) return 'transfer';
+  return 'dining';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   核心：从 URL 导入（协调所有步骤）
+═══════════════════════════════════════════════════════════ */
+let importResult = null; // 暂存待确认的导入数据
+
+async function importFromUrl(url) {
+  const r = {
+    name: '', area: '', coords: null, cat: 'dining',
+    hours: '', desc: '', tags: [], fromStay: {},
+    apiUsed: false,
+  };
+
+  // ① 提取坐标
+  const coords = extractCoords(url);
+  if (!coords) throw new Error('无法提取坐标。请使用含 @lat,lon 的完整 URL 或 Embed URL。\n短链（goo.gl）请先在浏览器打开，再复制地址栏链接。');
+  r.coords = coords;
+
+  // ② 从 URL 提取店名
+  const nm = url.match(/\/maps\/place\/([^/@?&#]+)/);
+  if (nm) r.name = decodeURIComponent(nm[1].replace(/\+/g, ' '));
+
+  // ③ 反向地理编码（免费）获取区域名
+  try {
+    const geo = await nominatimReverse(coords.lat, coords.lon);
+    r.area = pickArea(geo);
+  } catch(_) { r.area = ''; }
+
+  // ④ 猜测分类
+  r.cat = r.name ? guessCat(r.name) : 'dining';
+
+  // ⑤ 计算各民宿距离
+  for (const [stay, prop] of Object.entries(getPropCoords())) {
+    const km = haversineKm(prop.lat, prop.lon, coords.lat, coords.lon);
+    r.fromStay[stay] = estimateTravel(km);
+  }
+
+  // ⑥ 若有 API Key → 获取营业时间、简介、精确分类
+  if (gApiKey && r.name) {
+    try {
+      const place = await fetchPlaceDetails(r.name, coords.lat, coords.lon);
+      r.name    = place.name || r.name;
+      r.hours   = parseHours(place.opening_hours);
+      r.desc    = place.editorial_summary?.text || '';
+      const cat = typesToCat(place.types);
+      if (cat) r.cat = cat;
+      r.tags    = CAT_DEFAULT_TAGS[r.cat] || [];
+      r.apiUsed = true;
+    } catch(e) {
+      console.warn('Places API:', e.message);
+      r.tags = CAT_DEFAULT_TAGS[r.cat] || [];
+    }
+  } else {
+    r.tags = CAT_DEFAULT_TAGS[r.cat] || [];
+  }
+
+  return r;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   导入模态：UI 逻辑
+═══════════════════════════════════════════════════════════ */
+function openImportModal() {
+  document.getElementById('import-url-input').value = '';
+  document.getElementById('import-status').style.display = 'none';
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('import-foot').style.display = 'none';
+  document.getElementById('import-modal').classList.add('open');
+  setTimeout(() => document.getElementById('import-url-input').focus(), 80);
+}
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('open');
+}
+
+document.getElementById('import-open-btn').addEventListener('click', openImportModal);
+document.getElementById('import-close').addEventListener('click', closeImportModal);
+document.getElementById('import-again').addEventListener('click', () => {
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('import-foot').style.display = 'none';
+  document.getElementById('import-status').style.display = 'none';
+  document.getElementById('import-url-input').value = '';
+  document.getElementById('import-url-input').focus();
+});
+document.getElementById('import-go-settings').addEventListener('click', e => {
+  e.preventDefault();
+  closeImportModal();
+  document.getElementById('api-key-input').value = gApiKey;
+  document.getElementById('settings-modal').classList.add('open');
+});
+
+document.getElementById('import-fetch-btn').addEventListener('click', async () => {
+  const url    = document.getElementById('import-url-input').value.trim();
+  const status = document.getElementById('import-status');
+  const preview= document.getElementById('import-preview');
+  const foot   = document.getElementById('import-foot');
+  if (!url) return;
+
+  status.className = 'import-status loading';
+  status.textContent = '🔍 正在获取门店信息…';
+  status.style.display = 'block';
+  preview.style.display = 'none';
+  foot.style.display = 'none';
+  document.getElementById('import-fetch-btn').disabled = true;
+
+  try {
+    importResult = await importFromUrl(url);
+
+    // 渲染预览
+    const stay_labels = { higashiyama:'东山', gion:'祇园', arashiyama:'岚山' };
+    const distText = Object.entries(importResult.fromStay)
+      .map(([k,v]) => `${stay_labels[k]}: ${v.zh}`)
+      .join('  |  ');
+
+    document.getElementById('import-preview-data').innerHTML = `
+      <dt>店名</dt><dd>${importResult.name || '—'}</dd>
+      <dt>地区</dt><dd>${importResult.area || '—'}</dd>
+      <dt>分类</dt><dd>${importResult.cat}</dd>
+      <dt>坐标</dt><dd>${importResult.coords.lat.toFixed(5)}, ${importResult.coords.lon.toFixed(5)}</dd>
+      <dt>营业时间</dt><dd>${importResult.hours || (importResult.apiUsed ? '未获取到' : '需手动填写')}</dd>
+      <dt>简介</dt><dd style="grid-column:1/-1">${importResult.desc || (importResult.apiUsed ? '未获取到' : '需手动填写')}</dd>
+      <dt>各民宿距离</dt><dd style="grid-column:1/-1">${distText}</dd>
+    `;
+
+    document.getElementById('import-api-hint').style.display = importResult.apiUsed ? 'none' : 'block';
+    status.className = 'import-status success';
+    status.textContent = `✅ 获取成功${importResult.apiUsed ? '（含 Places API 详情）' : '（基础信息）'}`;
+    preview.style.display = 'block';
+    foot.style.display = 'flex';
+  } catch(err) {
+    status.className = 'import-status error';
+    status.textContent = '❌ ' + err.message;
+  } finally {
+    document.getElementById('import-fetch-btn').disabled = false;
+  }
+});
+
+// 按 Enter 触发获取
+document.getElementById('import-url-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('import-fetch-btn').click();
+});
+
+document.getElementById('import-confirm').addEventListener('click', () => {
+  if (!importResult) return;
+  const r = importResult;
+  const id = nextId();
+  const storeObj = {
+    id, cat: r.cat, rec: false, img: '',
+    zh: {
+      name:  r.name,
+      area:  r.area,
+      desc:  r.desc,
+      tags:  r.tags,
+      hours: r.hours,
+    },
+    en: { name: '', area: '', desc: '', tags: [], hours: '' },
+    ja: { name: '', area: '', desc: '', tags: [], hours: '' },
+    fromStay: {
+      ...r.fromStay,   // 包含所有民宿点位的距离（来自 PROPERTIES_DATA）
+    },
+    storeCoords: r.coords,
+  };
+  stores.push(storeObj);
+  closeImportModal();
+  renderAll();
+  // 滚动并展开新卡片
+  const cards = document.querySelectorAll('.s-card');
+  const newCard = cards[cards.length - 1];
+  newCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // 如果还有字段需要填写，提示用户
+  const needsMore = !r.desc || !r.hours;
+  if (needsMore) {
+    setTimeout(() => {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-size:.78rem;color:#b45309;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:.45rem .7rem;margin-bottom:.5rem';
+      hint.textContent = `⚠ 请补充：${!r.desc ? '简介 ' : ''}${!r.hours ? '营业时间 ' : ''}，然后点「🌐 自动翻译」`;
+      const body = newCard.querySelector('.s-body');
+      if (body) body.insertBefore(hint, body.firstChild);
+    }, 400);
+  }
+  importResult = null;
+});
+
+/* ═══════════════════════════════════════════════════════════
+   数据模型（内存副本）
+═══════════════════════════════════════════════════════════ */
+let CATS = ['spa', 'dining', 'transfer', 'whisky', 'kimono'];
+let stores = JSON.parse(JSON.stringify(window.STORES || []));
+
+function nextId() {
+  const nums = stores.map(s => parseInt((s.id || 's0').replace('s','')) || 0);
+  return 's' + (Math.max(0, ...nums) + 1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   从 DOM 读取一个门店的当前值
+═══════════════════════════════════════════════════════════ */
+function readCard(card) {
+  const g = cls => card.querySelector('.' + cls);
+  const v = cls => g(cls) ? g(cls).value.trim() : '';
+  const idx = card.dataset.idx;
+
+  const data = stores[idx];
+
+  data.cat      = v('f-cat');
+  data.rec      = card.querySelector('.f-rec').checked;
+  data.img      = v('f-img');
+  const oAll = parseInt(card.querySelector('.f-order-all')?.value);
+  const oCat = parseInt(card.querySelector('.f-order-cat')?.value);
+  if (!isNaN(oAll)) data.orderAll = oAll;
+  if (!isNaN(oCat)) data.orderCat = oCat;
+
+  data.zh.name  = v('f-zh-name');
+  data.zh.area  = v('f-zh-area');
+  data.zh.desc  = v('f-zh-desc');
+  data.zh.tags  = v('f-zh-tags').split(',').map(t => t.trim()).filter(Boolean);
+  data.zh.hours = v('f-zh-hours');
+
+  data.en.name  = v('f-en-name');
+  data.en.area  = v('f-en-area');
+  data.en.desc  = v('f-en-desc');
+  data.en.tags  = v('f-en-tags').split(',').map(t => t.trim()).filter(Boolean);
+  data.en.hours = v('f-en-hours');
+
+  data.ja.name  = v('f-ja-name');
+  data.ja.area  = v('f-ja-area');
+  data.ja.desc  = v('f-ja-desc');
+  data.ja.tags  = v('f-ja-tags').split(',').map(t => t.trim()).filter(Boolean);
+  data.ja.hours = v('f-ja-hours');
+
+  for (const k of ['higashiyama', 'gion', 'arashiyama']) {
+    data.fromStay[k].zh = v('f-stay-zh-' + k);
+    data.fromStay[k].en = v('f-stay-en-' + k) || data.fromStay[k].en || '';
+    data.fromStay[k].ja = v('f-stay-ja-' + k) || data.fromStay[k].ja || '';
+  }
+
+  // storeCoords 由计算按钮直接写入 stores[]，无需从表单读取
+
+  // 更新标题
+  card.querySelector('.s-title').textContent = data.zh.name || '（新门店）';
+  card.dataset.cat = data.cat;
+
+  return data;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   渲染单张门店卡片
+═══════════════════════════════════════════════════════════ */
+function mkInput(cls, val, ph = '') {
+  return `<input class="${cls}" value="${escH(val)}" placeholder="${ph}">`;
+}
+function mkTextarea(cls, val, ph = '') {
+  return `<textarea class="${cls}" placeholder="${ph}">${escH(val)}</textarea>`;
+}
+function escH(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderCard(data, idx) {
+  // 民宿标签从 PROPERTIES_DATA 动态派生，新增民宿后自动出现
+  const stays = Object.fromEntries(PROPERTIES_DATA.map(p => [p.id, p.zh || p.id]));
+
+  const catOpts = CATS.map(c =>
+    `<option value="${c}" ${data.cat === c ? 'selected' : ''}>${c}</option>`
+  ).join('');
+
+  const stayRowsZh = Object.entries(stays).map(([k, label]) =>
+    `<label>${label}</label>${mkInput('f-stay-zh-' + k, data.fromStay?.[k]?.zh || '', '步行X分')}` +
+    `<span style="font-size:.7rem;color:var(--muted);grid-column:1/-1;padding-bottom:.15rem">
+       EN: ${mkInput('f-stay-en-' + k, data.fromStay?.[k]?.en || '', 'X min walk')} &nbsp;
+       JA: ${mkInput('f-stay-ja-' + k, data.fromStay?.[k]?.ja || '', '徒歩X分')}
+     </span>`
+  ).join('');
+
+  const langFields = (prefix, d) =>
+    `<div class="field-row"><label>店名</label>${mkInput('f-' + prefix + '-name', d.name)}</div>
+     <div class="field-row"><label>地区</label>${mkInput('f-' + prefix + '-area', d.area)}</div>
+     <div class="field-row"><label>描述</label>${mkTextarea('f-' + prefix + '-desc', d.desc)}</div>
+     <div class="field-row"><label>标签</label>${mkInput('f-' + prefix + '-tags', (d.tags || []).join(', '), '逗号分隔')}
+       <div class="field-hint">用英文逗号分隔，如：按摩, 深夜可约</div></div>
+     <div class="field-row"><label>营业时间</label>${mkInput('f-' + prefix + '-hours', d.hours)}</div>`;
+
+  const imgSrc = data.img || '';
+
+  const card = document.createElement('div');
+  card.className = 's-card open';
+  card.dataset.idx = idx;
+  card.dataset.cat = data.cat;
+  card.innerHTML = `
+    <div class="s-head">
+      <span class="cat-dot"></span>
+      <span class="s-title">${escH(data.zh.name || '（新门店）')}</span>
+      <button class="btn btn-danger btn-sm del-btn" style="margin-left:auto">删除</button>
+      <span class="s-chevron">▶</span>
+    </div>
+    <div class="s-body">
+
+      <!-- 基本信息 -->
+      <div class="section-label">基本设置</div>
+      <div class="field-row">
+        <label>排序</label>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <label style="font-size:.76rem;color:var(--muted);white-space:nowrap">全部列表</label>
+          <input type="number" class="f-order-all" value="${data.orderAll ?? ''}" min="1" style="width:60px">
+          <label style="font-size:.76rem;color:var(--muted);white-space:nowrap;margin-left:.3rem">分类内</label>
+          <input type="number" class="f-order-cat" value="${data.orderCat ?? ''}" min="1" style="width:60px">
+          <span style="font-size:.72rem;color:var(--muted)">数字越小越靠前</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>分类</label>
+        <select class="f-cat">${catOpts}</select>
+      </div>
+      <div class="field-row">
+        <label>★ 推荐</label>
+        <label style="display:flex;align-items:center;gap:.4rem;padding-top:.45rem">
+          <input type="checkbox" class="f-rec" ${data.rec ? 'checked' : ''}> 显示推荐标签
+        </label>
+      </div>
+      <div class="field-row">
+        <label>图片</label>
+        <div class="img-row">
+          <img class="img-preview" src="${escH(imgSrc)}" alt="" onerror="this.src=''">
+          <div>${mkInput('f-img', imgSrc, 'https://... 或 images/spa1.jpg')}
+          <div class="field-hint">填写图片 URL，或将图片放入 images/ 文件夹后填相对路径</div></div>
+        </div>
+      </div>
+
+      <!-- 中文内容 -->
+      <div class="section-label">🇨🇳 中文内容</div>
+      ${langFields('zh', data.zh)}
+
+      <!-- 门店坐标（自动计算距离） -->
+      <div class="section-label">📍 门店位置 → 自动计算各民宿距离</div>
+      <div class="field-row">
+        <label>Maps 链接</label>
+        <div style="display:flex;gap:.4rem;align-items:center">
+          ${mkInput('f-maps-url', data.storeCoords ? `已有坐标: ${(data.storeCoords.lat||'').toString().slice(0,9)}, ${(data.storeCoords.lon||'').toString().slice(0,10)}` : '', '粘贴 Google Maps 或 Embed URL…')}
+          <button class="btn btn-green btn-sm calc-dist-btn" type="button" style="white-space:nowrap">📍 计算距离</button>
+        </div>
+      </div>
+      <div class="calc-result" style="display:none;font-size:.75rem;padding:.3rem 0 .1rem;"></div>
+      <div class="field-hint" style="margin-bottom:.5rem">
+        支持：Google Maps 完整 URL、Embed URL（含 <code>!3d</code>/<code>!2d</code>）。
+        短链（maps.app.goo.gl）请先在浏览器打开，复制地址栏完整 URL 再粘贴。
+      </div>
+
+      <!-- 距离（可手动覆盖） -->
+      <div class="section-label" style="margin-top:.2rem">各民宿出发距离（计算后可手动调整）</div>
+      <div class="stay-grid">${stayRowsZh}</div>
+
+      <!-- 翻译操作 -->
+      <div class="translate-bar">
+        <button class="btn btn-green btn-sm translate-btn">🌐 自动翻译英文 / 日文</button>
+        <span class="translate-status"></span>
+      </div>
+
+      <!-- 英文 -->
+      <div class="lang-section">
+        <div class="lang-toggle">🇺🇸 English <span>▼</span></div>
+        <div class="lang-content">${langFields('en', data.en || {})}</div>
+      </div>
+
+      <!-- 日文 -->
+      <div class="lang-section" style="margin-top:.45rem">
+        <div class="lang-toggle">🇯🇵 日本語 <span>▼</span></div>
+        <div class="lang-content">${langFields('ja', data.ja || {})}</div>
+      </div>
+
+    </div>`;
+
+  // 折叠/展开
+  card.querySelector('.s-head').addEventListener('click', e => {
+    if (e.target.closest('.del-btn')) return;
+    card.classList.toggle('open');
+  });
+
+  // 删除
+  card.querySelector('.del-btn').addEventListener('click', () => {
+    if (!confirm(`确定删除「${data.zh.name}」？`)) return;
+    stores.splice(idx, 1);
+    renderAll();
+  });
+
+  // 图片预览
+  card.querySelector('.f-img').addEventListener('input', e => {
+    card.querySelector('.img-preview').src = e.target.value;
+  });
+
+  // 坐标提取 & 距离自动计算
+  card.querySelector('.calc-dist-btn').addEventListener('click', () => {
+    const url   = card.querySelector('.f-maps-url').value.trim();
+    const resEl = card.querySelector('.calc-result');
+    const coords = extractCoords(url);
+
+    if (!coords) {
+      resEl.style.display = 'block';
+      resEl.style.color   = 'var(--red)';
+      resEl.textContent   = '⚠ 无法从此链接提取坐标。请粘贴含 @lat,lon 的完整 URL，或 Google Maps Embed URL。';
+      return;
+    }
+
+    // 写入坐标
+    stores[card.dataset.idx].storeCoords = coords;
+
+    // 为每个民宿计算距离并填入表单
+    const lines = [];
+    for (const [stay, prop] of Object.entries(PROPERTY_COORDS)) {
+      const km     = haversineKm(prop.lat, prop.lon, coords.lat, coords.lon);
+      const travel = estimateTravel(km);
+      const label  = { higashiyama:'东山', gion:'祇园', arashiyama:'岚山' }[stay];
+      const note   = stay !== 'higashiyama' ? '（近似）' : '';
+      lines.push(`${label}${note}: ${travel.zh}（直线 ${(km * 1000).toFixed(0)}m）`);
+
+      const setVal = (cls, val) => { const el = card.querySelector(cls); if (el) el.value = val; };
+      setVal(`.f-stay-zh-${stay}`, travel.zh);
+      setVal(`.f-stay-en-${stay}`, travel.en);
+      setVal(`.f-stay-ja-${stay}`, travel.ja);
+    }
+
+    resEl.style.display = 'block';
+    resEl.style.color   = 'var(--brand)';
+    resEl.innerHTML = `✅ 坐标 ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)} &nbsp;|&nbsp; ` + lines.join('；');
+    readCard(card);
+  });
+
+  // 语言折叠
+  card.querySelectorAll('.lang-toggle').forEach(t => {
+    t.addEventListener('click', () => {
+      const c = t.nextElementSibling;
+      t.classList.toggle('open');
+      c.classList.toggle('open');
+    });
+  });
+
+  // 自动翻译
+  card.querySelector('.translate-btn').addEventListener('click', async () => {
+    readCard(card); // 先把当前表单值写回 data
+    const btn = card.querySelector('.translate-btn');
+    const status = card.querySelector('.translate-status');
+    btn.disabled = true;
+    try {
+      await translateStore(stores[idx], status);
+      // 把翻译结果写回表单
+      const d = stores[idx];
+      const set = (cls, val) => { const el = card.querySelector('.' + cls); if(el) el.value = val; };
+      const setTA = (cls, val) => { const el = card.querySelector('.' + cls); if(el) el.value = val; };
+      set('f-en-name',  d.en.name);  set('f-en-area', d.en.area);
+      setTA('f-en-desc', d.en.desc);
+      set('f-en-tags',  d.en.tags.join(', ')); set('f-en-hours', d.en.hours);
+      set('f-ja-name',  d.ja.name);  set('f-ja-area', d.ja.area);
+      setTA('f-ja-desc', d.ja.desc);
+      set('f-ja-tags',  d.ja.tags.join(', ')); set('f-ja-hours', d.ja.hours);
+      for (const k of ['higashiyama', 'gion', 'arashiyama']) {
+        set('f-stay-en-' + k, d.fromStay[k].en);
+        set('f-stay-ja-' + k, d.fromStay[k].ja);
+      }
+      // 展开英文/日文区域
+      card.querySelectorAll('.lang-toggle').forEach(t => {
+        t.classList.add('open');
+        t.nextElementSibling.classList.add('open');
+      });
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // 任何输入都同步到 stores[]
+  card.querySelectorAll('input, textarea, select').forEach(el => {
+    el.addEventListener('change', () => readCard(card));
+  });
+
+  return card;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   渲染全部
+═══════════════════════════════════════════════════════════ */
+function renderAll() {
+  const list = document.getElementById('store-list');
+  list.innerHTML = '';
+  stores.forEach((s, i) => list.appendChild(renderCard(s, i)));
+
+  // 新增按钮
+  const addBtn = document.createElement('button');
+  addBtn.id = 'add-btn';
+  addBtn.textContent = '＋ 新增门店';
+  addBtn.addEventListener('click', addStore);
+  list.appendChild(addBtn);
+}
+
+function addStore() {
+  const id = nextId();
+  stores.push({
+    id,
+    cat: 'spa',
+    rec: false,
+    img: '',
+    zh: { name: '', area: '', desc: '', tags: [], hours: '' },
+    en: { name: '', area: '', desc: '', tags: [], hours: '' },
+    ja: { name: '', area: '', desc: '', tags: [], hours: '' },
+    fromStay: Object.fromEntries(PROPERTIES_DATA.map(p => [p.id, { zh: '', en: '', ja: '' }])),
+  });
+  renderAll();
+  // 滚动到新卡片
+  const cards = document.querySelectorAll('.s-card');
+  cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Tab 切换
+═══════════════════════════════════════════════════════════ */
+document.getElementById('main-tab-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-nav-btn');
+  if (!btn) return;
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + tab));
+  if (tab === 'properties') renderProperties();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   民宿管理
+═══════════════════════════════════════════════════════════ */
+function renderProperties() {
+  const list = document.getElementById('prop-list');
+  list.innerHTML = '';
+  PROPERTIES_DATA.forEach((prop, i) => list.appendChild(makePropCard(prop, i)));
+}
+
+function makePropCard(prop, idx) {
+  const precise = prop.precise;
+  const card = document.createElement('div');
+  card.className = 'prop-card open';
+  card.dataset.pidx = idx;
+  card.innerHTML = `
+    <div class="prop-head">
+      <div class="prop-head-l">
+        <span class="prop-name-lbl">${escH(prop.zh || prop.id)}</span>
+        <span class="prec-badge ${precise ? 'ok' : 'est'}">${precise ? '✅ 精确' : '⚠ 近似'}</span>
+      </div>
+      <div class="prop-head-r">
+        <button class="btn btn-danger btn-sm prop-del" type="button">删除</button>
+        <span class="prop-chev">▶</span>
+      </div>
+    </div>
+    <div class="prop-body">
+      <div class="section-label">民宿名称</div>
+      <div class="field-row"><label>ID</label>
+        <input class="f-pid" value="${escH(prop.id)}" placeholder="英文小写，如 gion">
+        <div class="field-hint">用于页面文件命名和 ?stay= 参数，建议英文小写无空格</div>
+      </div>
+      <div class="field-row"><label>中文</label><input class="f-pzh" value="${escH(prop.zh)}"></div>
+      <div class="field-row"><label>English</label><input class="f-pen" value="${escH(prop.en)}"></div>
+      <div class="field-row"><label>日本語</label><input class="f-pja" value="${escH(prop.ja)}"></div>
+
+      <div class="section-label">📍 位置坐标</div>
+      <div class="field-row">
+        <label>Maps 链接</label>
+        <div style="display:flex;gap:.4rem">
+          <input type="url" class="f-pmaps" value="${escH(prop.mapsUrl || '')}" placeholder="粘贴 Google Maps Embed URL（街道级别）">
+          <button class="btn btn-green btn-sm prop-extract-btn" type="button">提取坐标</button>
+        </div>
+      </div>
+      <div class="coord-row">
+        lat <strong class="f-plat-lbl">${prop.lat || '—'}</strong>
+        &nbsp;·&nbsp; lon <strong class="f-plon-lbl">${prop.lon || '—'}</strong>
+        <span class="prec-badge ${precise ? 'ok' : 'est'}" style="margin-left:.4rem">${precise ? '✅ 精确' : '⚠ 近似'}</span>
+      </div>
+      <button class="btn btn-green prop-recalc-btn" type="button"
+        style="width:100%;margin-top:.75rem;padding:.65rem">
+        📍 重新计算「${escH(prop.zh)}」到所有门店的距离
+      </button>
+      <p class="prop-recalc-status" style="font-size:.76rem;color:var(--muted);text-align:center;margin-top:.35rem;min-height:1.2em"></p>
+    </div>`;
+
+  // 折叠/展开
+  card.querySelector('.prop-head').addEventListener('click', e => {
+    if (e.target.closest('.prop-del')) return;
+    card.classList.toggle('open');
+  });
+
+  // 删除
+  card.querySelector('.prop-del').addEventListener('click', () => {
+    if (!confirm(`确定删除民宿「${prop.zh}」？此操作不影响已录入的门店距离数据。`)) return;
+    PROPERTIES_DATA.splice(idx, 1);
+    renderProperties();
+  });
+
+  // 同步表单改动到 PROPERTIES_DATA
+  ['f-pid','f-pzh','f-pen','f-pja','f-pmaps'].forEach(cls => {
+    card.querySelector('.' + cls)?.addEventListener('change', () => syncPropCard(card));
+  });
+
+  // 提取坐标
+  card.querySelector('.prop-extract-btn').addEventListener('click', () => {
+    const url = card.querySelector('.f-pmaps').value.trim();
+    const coords = extractCoords(url);
+    if (!coords) {
+      alert('无法提取坐标，请使用街道级别的 Embed URL（!1d 数值小于 10000）');
+      return;
+    }
+    const p = PROPERTIES_DATA[card.dataset.pidx];
+    p.lat = coords.lat; p.lon = coords.lon; p.precise = true;
+    syncPropCard(card);
+    // 更新显示
+    card.querySelector('.f-plat-lbl').textContent = coords.lat.toFixed(5);
+    card.querySelector('.f-plon-lbl').textContent = coords.lon.toFixed(5);
+    card.querySelectorAll('.prec-badge').forEach(b => { b.className = 'prec-badge ok'; b.textContent = '✅ 精确'; });
+  });
+
+  // 重新计算距离
+  card.querySelector('.prop-recalc-btn').addEventListener('click', () => {
+    const p = PROPERTIES_DATA[card.dataset.pidx];
+    if (!p.lat || !p.lon) { alert('请先设置坐标'); return; }
+    const statusEl = card.querySelector('.prop-recalc-status');
+    let count = 0;
+    stores.forEach(s => {
+      if (s.storeCoords?.lat && s.storeCoords?.lon) {
+        const km = haversineKm(p.lat, p.lon, s.storeCoords.lat, s.storeCoords.lon);
+        if (!s.fromStay) s.fromStay = {};
+        s.fromStay[p.id] = estimateTravel(km);
+        count++;
+      }
+    });
+    statusEl.textContent = `✅ 已更新 ${count} 家门店的距离（另有 ${stores.length - count} 家无坐标，需手动填写）`;
+    renderAll(); // 刷新门店卡片显示
+  });
+
+  return card;
+}
+
+function syncPropCard(card) {
+  const i = parseInt(card.dataset.pidx);
+  const p = PROPERTIES_DATA[i];
+  p.id  = card.querySelector('.f-pid').value.trim();
+  p.zh  = card.querySelector('.f-pzh').value.trim();
+  p.en  = card.querySelector('.f-pen').value.trim();
+  p.ja  = card.querySelector('.f-pja').value.trim();
+  p.mapsUrl = card.querySelector('.f-pmaps').value.trim();
+  card.querySelector('.prop-name-lbl').textContent = p.zh || p.id;
+  card.querySelector('.prop-recalc-btn').textContent =
+    `📍 重新计算「${p.zh}」到所有门店的距离`;
+}
+
+document.getElementById('add-prop-btn').addEventListener('click', () => {
+  PROPERTIES_DATA.push({
+    id: '', zh: '', en: '', ja: '',
+    lat: null, lon: null, mapsUrl: '', precise: false
+  });
+  renderProperties();
+  // 滚动到新卡片
+  const cards = document.querySelectorAll('.prop-card');
+  if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* ═══════════════════════════════════════════════════════════
+   全部翻译
+═══════════════════════════════════════════════════════════ */
+document.getElementById('translate-all-btn').addEventListener('click', async () => {
+  // 先把所有表单值写回
+  document.querySelectorAll('.s-card').forEach(card => readCard(card));
+  const btn = document.getElementById('translate-all-btn');
+  btn.disabled = true;
+  btn.textContent = '翻译中…';
+  for (let i = 0; i < stores.length; i++) {
+    btn.textContent = `翻译中 ${i + 1}/${stores.length}…`;
+    await translateStore(stores[i], null);
+  }
+  renderAll();
+  btn.disabled = false;
+  btn.textContent = '🌐 全部翻译';
+  alert('全部翻译完成！请检查内容后点「导出 stores.js」。');
+});
+
+/* ═══════════════════════════════════════════════════════════
+   导出
+═══════════════════════════════════════════════════════════ */
+function buildExportCode() {
+  // 先同步所有表单
+  document.querySelectorAll('.s-card').forEach(card => readCard(card));
+
+  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Tokyo' });
+  const header = [
+    '/**',
+    ' * stores.js — 合作门店数据',
+    ' *',
+    ` * 最后更新：${now}（由 admin.html 导出）`,
+    ' *',
+    ' * ✏️  日常维护方法：',
+    ' *   1. 打开 admin.html → 点「＋ 导入门店」→ 粘贴 Google Maps 链接',
+    ' *   2. 确认信息 → 点「🌐 自动翻译」→ 点「📥 导出 stores.js」',
+    ' *   3. 下载文件并覆盖此文件，刷新前台页面即可',
+    ' *',
+    ' * 字段说明：',
+    ' *   cat  : spa | dining | transfer | whisky | kimono',
+    ' *   rec  : true → 显示「★ 推荐」标签；false → 不显示',
+    ' *   img  : 图片 URL，或本地路径如 images/spa1.jpg',
+    ' *   fromStay.higashiyama/gion/arashiyama : 各民宿出发的步行/电车时间',
+    ' *',
+    ' * 📍 默认参考民宿（东山）',
+    ' *   地址：https://maps.app.goo.gl/zJGmJPxzXJML4NTf8',
+    ' *   坐标：lat 35.01021, lon 135.77801（東山区清閑院蛤屋町 394-4）',
+    ' *   fromStay.higashiyama 里的距离以此地址为出发点估算',
+    ' */',
+  ].join('\n');
+
+  // 同步所有民宿表单
+  document.querySelectorAll('.prop-card').forEach(card => syncPropCard && syncPropCard(card));
+
+  const propIds = PROPERTIES_DATA.map(p => p.id).filter(Boolean).join(' / ');
+  const stayNote = `\n * 当前民宿点位：${propIds}`;
+
+  return header.replace(
+    ' *   fromStay.higashiyama/gion/arashiyama : 各民宿出发的步行/电车时间',
+    ` *   fromStay.[民宿ID] : 各民宿出发的步行/电车时间（点位：${propIds}）`
+  ) +
+    '\n/* ── 民宿点位 ──────────────────── */\n' +
+    'window.PROPERTIES = ' + JSON.stringify(PROPERTIES_DATA, null, 2) + ';\n\n' +
+    '/* ── 门店数据 ──────────────────── */\n' +
+    'window.STORES = ' + JSON.stringify(stores, null, 2) + ';\n';
+}
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  document.getElementById('export-code').value = buildExportCode();
+  document.getElementById('modal').classList.add('open');
+});
+
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('open');
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const ta = document.getElementById('export-code');
+  ta.select();
+  document.execCommand('copy');
+  document.getElementById('copy-btn').textContent = '✅ 已复制';
+  setTimeout(() => { document.getElementById('copy-btn').textContent = '📋 复制'; }, 2000);
+});
+
+document.getElementById('download-btn').addEventListener('click', () => {
+  const code = buildExportCode();
+  const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'stores.js';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   启动
+═══════════════════════════════════════════════════════════ */
+renderAll();
+</script>
+</body>
+</html>

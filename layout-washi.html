@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>版式 D · 和纸极简</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Noto+Serif+SC:wght@500;600&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #f5efe4;
+      --surface:    #fffcf7;
+      --ink:        #1c1814;
+      --muted:      #7a7268;
+      --accent:     #8b3252;
+      --accent-dim: rgba(139,50,82,.09);
+      --line:       rgba(28,24,20,.1);
+      --radius:     10px;
+      --safe-b:     max(1rem, env(safe-area-inset-bottom));
+    }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Kaku Gothic ProN", sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      padding-bottom: calc(4.5rem + var(--safe-b));
+    }
+
+    /* ── Header (scrolls away) ───────────────────────── */
+    .header {
+      padding: 1.8rem 1.5rem 1.2rem;
+      text-align: center;
+      position: relative;
+    }
+    .header-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      position: absolute; top: 1rem; left: 1.2rem; right: 1.2rem;
+    }
+    .lang-sw { display: flex; gap: .2rem; }
+    .lang-sw button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: transparent; color: var(--muted);
+      font-size: .62rem; font-weight: 700;
+      padding: .28rem .42rem; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+    }
+    .lang-sw button.on {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+    /* spacer to center brand with lang button on right */
+    .header-spacer { width: 4rem; }
+
+    .brand {
+      font-family: "Playfair Display", "Noto Serif SC", serif;
+      font-size: 1.05rem; font-weight: 500; font-style: italic;
+      letter-spacing: .14em; color: var(--ink);
+      display: block;
+    }
+    html[lang="zh-CN"] .brand,
+    html[lang="ja"] .brand {
+      font-family: "Noto Serif SC","Noto Serif JP",serif;
+      font-style: normal; font-size: .95rem; letter-spacing: .2em;
+    }
+
+    /* decorative ornament under brand */
+    .ornament {
+      display: flex; align-items: center; justify-content: center;
+      gap: .55rem; margin: .8rem auto .65rem;
+      color: var(--accent); opacity: .45;
+    }
+    .ornament::before,
+    .ornament::after {
+      content: ''; display: block;
+      width: 32px; height: 1px; background: currentColor;
+    }
+    .ornament-gem {
+      width: 5px; height: 5px; background: currentColor;
+      transform: rotate(45deg);
+    }
+
+    .prop-tag {
+      display: inline-block;
+      font-size: .72rem; color: var(--accent);
+      letter-spacing: .12em; text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: .5rem;
+    }
+    .header-lead {
+      font-size: .83rem; color: var(--muted);
+      line-height: 1.65; max-width: 24em; margin: 0 auto;
+    }
+    .header-dist-note {
+      margin-top: .55rem;
+      font-size: .72rem; color: rgba(139,50,82,.55);
+    }
+
+    /* ── Category filter (sticky) ────────────────────── */
+    .filter-wrap {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(245,239,228,.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: .55rem 1.2rem;
+    }
+    .filter {
+      display: flex; gap: .3rem; overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .filter::-webkit-scrollbar { display: none; }
+    .ftab {
+      flex: 0 0 auto; white-space: nowrap;
+      padding: .38rem .8rem; border-radius: 999px;
+      font-size: .76rem; border: 1px solid var(--line);
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: inherit;
+    }
+    .ftab.on {
+      background: var(--accent); border-color: var(--accent);
+      color: #fff; font-weight: 600;
+    }
+
+    /* ── Content ─────────────────────────────────────── */
+    main { padding: .25rem 0 1rem; }
+
+    .group { margin-bottom: .5rem; }
+    .group.hidden { display: none; }
+
+    /* section header: CATEGORY ─────────────── */
+    .sec-head {
+      display: flex; align-items: center; gap: .65rem;
+      padding: 1.1rem 1.25rem .5rem;
+    }
+    .sec-label {
+      font-size: .65rem; font-weight: 700;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: var(--accent); white-space: nowrap;
+    }
+    .sec-rule { flex: 1; height: 1px; background: var(--line); }
+
+    /* store rows inside a group */
+    .group-list {
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .srow {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .2rem .7rem;
+      padding: .85rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+    .srow:last-child { border-bottom: none; }
+    .srow-main h3 {
+      font-family: "Noto Serif SC","Noto Serif JP","Playfair Display",serif;
+      font-size: .93rem; font-weight: 600; color: var(--ink);
+    }
+    .srow-main p {
+      margin-top: .2rem; font-size: .77rem;
+      color: var(--muted); line-height: 1.4;
+    }
+    .srow-meta {
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: .3rem;
+    }
+    .srow-dist {
+      font-size: .7rem; font-weight: 700;
+      color: var(--accent); white-space: nowrap;
+    }
+    .srow-book {
+      font-size: .7rem; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      padding: .3rem .58rem; border-radius: 7px;
+      border: 1px solid rgba(139,50,82,.25);
+      background: var(--accent-dim); color: var(--accent);
+      white-space: nowrap;
+    }
+
+    /* ── Bottom CTA ──────────────────────────────────── */
+    .cta-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: .5rem 1.25rem var(--safe-b);
+      background: rgba(245,239,228,.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--line);
+    }
+    .cta-bar button {
+      width: 100%; padding: .8rem; border-radius: 12px;
+      border: none; cursor: pointer; font-family: inherit;
+      font-size: .9rem; font-weight: 700; color: #fff;
+      background: var(--accent);
+      box-shadow: 0 8px 22px rgba(139,50,82,.22);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-spacer"></div>
+      <div class="lang-sw" id="lang-sw" role="group"></div>
+    </div>
+    <span class="brand" id="i-brand"></span>
+    <div class="ornament"><div class="ornament-gem"></div></div>
+    <p class="prop-tag" id="i-prop" style="display:none"></p>
+    <p class="header-lead" id="i-lead"></p>
+    <p class="header-dist-note" id="i-dnote"></p>
+  </header>
+
+  <!-- Filter -->
+  <div class="filter-wrap">
+    <div class="filter" id="filter" role="tablist"></div>
+  </div>
+
+  <!-- Main content (grouped by category) -->
+  <main id="main"></main>
+
+  <!-- Bottom CTA -->
+  <div class="cta-bar">
+    <button type="button" id="btn-cta"></button>
+  </div>
+
+  <script>
+  (function () {
+    /* ─── Config ──────────────────────────────── */
+    const LANGS       = ['zh','en','ja'];
+    const LANG_LABEL  = { zh:'中文', en:'EN', ja:'日本語' };
+    const KNOWN_STAYS = ['higashiyama','gion','arashiyama'];
+
+    /* ─── State ────────────────────────────────── */
+    let lang      = detectLang();
+    let activeTab = 'all';
+    const stayId  = detectStay();
+
+    /* ─── Detection ────────────────────────────── */
+    function detectLang() {
+      const q = (new URLSearchParams(location.search).get('lang') || '').toLowerCase();
+      if (LANGS.includes(q)) return q;
+      try { const s = localStorage.getItem('bnbHubLang'); if (LANGS.includes(s)) return s; } catch(_){}
+      const nav = (navigator.language || '').toLowerCase();
+      return nav.startsWith('zh') ? 'zh' : nav.startsWith('ja') ? 'ja' : 'en';
+    }
+    function detectStay() {
+      const s = (new URLSearchParams(location.search).get('stay') || '').toLowerCase();
+      return KNOWN_STAYS.includes(s) ? s : null;
+    }
+
+    /* ─── Data ─────────────────────────────────── */
+    const PROPERTIES = {
+      higashiyama: { zh:'東山町家', en:'Higashiyama Machiya', ja:'東山町家' },
+      gion:        { zh:'祇園別邸', en:'Gion Bettei',         ja:'祇園別邸' },
+      arashiyama:  { zh:'嵐山山居', en:'Arashiyama Sankyo',   ja:'嵐山山居' },
+    };
+
+    const UI = {
+      zh: {
+        docTitle: '合作体验推荐',
+        brand:    '京都 · 合作体验',
+        lead:     '以下为我们精心挑选的合作商家，涵盖按摩疗愈、京都料理、机场接送、威士忌品鉴与和服体验。如有需要，我们很乐意为您代为联系预约。',
+        dnote:    (p) => p ? `距离以 ${p} 为出发点估算` : '扫描房间内二维码，页面将自动显示至各店距离',
+        propAria: '当前民宿',
+        tabs: { all:'全部', spa:'按摩·SPA', dining:'餐厅', transfer:'接送', whisky:'Whisky', kimono:'和服' },
+        secLabels: { spa:'Relax', dining:'Dine', transfer:'Ride', whisky:'Dram', kimono:'Kimono' },
+        secTitles: { spa:'按摩·SPA', dining:'餐厅', transfer:'接送机', whisky:'Whisky 品鉴', kimono:'和服体验' },
+        btnCta:   '联系我们预约',
+        btnBook:  '代约',
+        alertBook:'占位：预约入口 (LINE / 表单)。',
+        alertCta: '占位：全局预约 / 联系。',
+        langAria: '界面语言',
+      },
+      en: {
+        docTitle: 'Partner Experiences',
+        brand:    'Kyoto · Partner Experiences',
+        lead:     'We\'ve curated massage, Kyoto cuisine, airport transfers, whisky tastings, and kimono experiences for our guests. We\'re happy to make arrangements on your behalf.',
+        dnote:    (p) => p ? `Distances from ${p}` : 'Scan the in-room QR code to see distances from your guesthouse',
+        propAria: 'Your property',
+        tabs: { all:'All', spa:'SPA', dining:'Dining', transfer:'Transfer', whisky:'Bar', kimono:'Experience' },
+        secLabels: { spa:'Relax', dining:'Dine', transfer:'Ride', whisky:'Dram', kimono:'Kimono' },
+        secTitles: { spa:'SPA', dining:'Dining', transfer:'Airport transfer', whisky:'Bar', kimono:'Experience' },
+        btnCta:   'Book via us',
+        btnBook:  'Book',
+        alertBook:'Placeholder: booking (LINE / form).',
+        alertCta: 'Placeholder: global booking.',
+        langAria: 'Language',
+      },
+      ja: {
+        docTitle: '提携体験のご案内',
+        brand:    '京都 · 提携体験',
+        lead:     'マッサージ、京料理、空港送迎、ウイスキー体験、着物レンタルなど厳選の提携先をご案内します。ご希望に応じて予約手配いたします。',
+        dnote:    (p) => p ? `${p}からのおよその距離` : 'お部屋のQRをスキャンすると各店までの距離が表示されます',
+        propAria: 'ご宿泊先',
+        tabs: { all:'すべて', spa:'SPA', dining:'食事', transfer:'送迎', whisky:'バー', kimono:'体験' },
+        secLabels: { spa:'RELAX', dining:'DINE', transfer:'RIDE', whisky:'DRAM', kimono:'KIMONO' },
+        secTitles: { spa:'SPA', dining:'レストラン', transfer:'空港送迎', whisky:'バー', kimono:'体験' },
+        btnCta:   'ご予約のご依頼',
+        btnBook:  '予約',
+        alertBook:'プレースホルダー：予約ページ。',
+        alertCta: 'プレースホルダー：予約窓口。',
+        langAria: '表示言語',
+      },
+    };
+
+    const GROUPS = [
+      {
+        id: 'spa',
+        items: [
+          {
+            zh:{ name:'示例 · 整体与精油护理', note:'可备注力度与语言偏好（占位）。' },
+            en:{ name:'Sample · body & aroma', note:'Note pressure or language pref. (placeholder).' },
+            ja:{ name:'サンプル · 整体とアロマ', note:'強さ・言語希望可（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'约 700m',en:'~700 m',ja:'約700m'}, gion:{zh:'约 1.6km',en:'~1.6 km',ja:'約1.6km'}, arashiyama:{zh:'约 9km',en:'~9 km',ja:'約9km'} },
+          },
+          {
+            zh:{ name:'示例 · 足疗专门店', note:'深夜档视库存而定（占位）。' },
+            en:{ name:'Sample · reflexology', note:'Late slots subject to availability (placeholder).' },
+            ja:{ name:'サンプル · 足つぼ', note:'深夜枠は状況次第（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'约 1.0km',en:'~1.0 km',ja:'約1.0km'}, gion:{zh:'约 2.1km',en:'~2.1 km',ja:'約2.1km'}, arashiyama:{zh:'约 8.2km',en:'~8.2 km',ja:'約8.2km'} },
+          },
+        ],
+      },
+      {
+        id: 'dining',
+        items: [
+          {
+            zh:{ name:'示例 · 京料理会席', note:'晚餐时段紧张，建议提前 3 天（占位）。' },
+            en:{ name:'Sample · Kyoto kaiseki', note:'Book ~3 days ahead for dinner (placeholder).' },
+            ja:{ name:'サンプル · 京懐石', note:'ディナーは3日前の予約推奨（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'约 1.1km',en:'~1.1 km',ja:'約1.1km'}, gion:{zh:'约 1.0km',en:'~1.0 km',ja:'約1.0km'}, arashiyama:{zh:'约 11km',en:'~11 km',ja:'約11km'} },
+          },
+          {
+            zh:{ name:'示例 · 居酒屋与本地酒', note:'适合轻松小酌（占位）。' },
+            en:{ name:'Sample · izakaya & sake', note:'Casual evening drinks (placeholder).' },
+            ja:{ name:'サンプル · 居酒屋と地酒', note:'気軽な夜向け（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'约 1.8km',en:'~1.8 km',ja:'約1.8km'}, gion:{zh:'约 600m',en:'~600 m',ja:'約600m'}, arashiyama:{zh:'约 10km',en:'~10 km',ja:'約10km'} },
+          },
+        ],
+      },
+      {
+        id: 'transfer',
+        items: [
+          {
+            zh:{ name:'示例 · 关空 / 伊丹接送', note:'举牌迎接、儿童座椅可备注（占位）。' },
+            en:{ name:'Sample · KIX / ITM transfer', note:'Meet & greet, child seats on request (placeholder).' },
+            ja:{ name:'サンプル · 空港送迎', note:'名前ボード・チャイルドシート可（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'专车',en:'By car',ja:'車'}, gion:{zh:'专车',en:'By car',ja:'車'}, arashiyama:{zh:'专车',en:'By car',ja:'車'} },
+          },
+        ],
+      },
+      {
+        id: 'whisky',
+        items: [
+          {
+            zh:{ name:'示例 · Whisky 品鉴会', note:'小班制品鉴与讲解（占位）。' },
+            en:{ name:'Sample · whisky tasting', note:'Small-group tasting & talk (placeholder).' },
+            ja:{ name:'サンプル · ウイスキー会', note:'少人数テイスティング（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'约 1.4km',en:'~1.4 km',ja:'約1.4km'}, gion:{zh:'约 2.0km',en:'~2.0 km',ja:'約2.0km'}, arashiyama:{zh:'约 10km',en:'~10 km',ja:'約10km'} },
+          },
+        ],
+      },
+      {
+        id: 'kimono',
+        items: [
+          {
+            zh:{ name:'示例 · 和服租赁与跟拍', note:'含发型方案，旺季建议上午（占位）。' },
+            en:{ name:'Sample · kimono & photos', note:'Hair styling included; AM slots in peak season (placeholder).' },
+            ja:{ name:'サンプル · 着物＋撮影', note:'ヘアセット込み、繁忙期は午前推奨（プレースホルダー）。' },
+            dist:{ higashiyama:{zh:'约 800m',en:'~800 m',ja:'約800m'}, gion:{zh:'约 450m',en:'~450 m',ja:'約450m'}, arashiyama:{zh:'约 12km',en:'~12 km',ja:'約12km'} },
+          },
+        ],
+      },
+    ];
+
+    /* ─── Helpers ─────────────────────────────────── */
+    function L() { return UI[lang]; }
+    function propName() { return stayId ? PROPERTIES[stayId][lang] : null; }
+    function getDist(item) {
+      if (!stayId) return '—';
+      return (item.dist[stayId] || {})[lang] || '—';
+    }
+
+    /* ─── DOM refs ────────────────────────────────── */
+    const $brand  = document.getElementById('i-brand');
+    const $prop   = document.getElementById('i-prop');
+    const $lead   = document.getElementById('i-lead');
+    const $dnote  = document.getElementById('i-dnote');
+    const $filter = document.getElementById('filter');
+    const $main   = document.getElementById('main');
+    const $btnCta = document.getElementById('btn-cta');
+    const $langSw = document.getElementById('lang-sw');
+
+    /* ─── Renders ─────────────────────────────────── */
+    function renderChrome() {
+      const u = L();
+      document.title       = u.docTitle;
+      $brand.textContent   = u.brand;
+      $lead.textContent    = u.lead;
+      $dnote.textContent   = u.dnote(propName());
+      $btnCta.textContent  = u.btnCta;
+      $langSw.setAttribute('aria-label', u.langAria);
+      const pn = propName();
+      if (pn) {
+        $prop.textContent    = pn;
+        $prop.style.display  = '';
+        $prop.setAttribute('aria-label', u.propAria);
+      } else {
+        $prop.style.display  = 'none';
+      }
+    }
+
+    function renderLangButtons() {
+      $langSw.innerHTML = '';
+      LANGS.forEach(code => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = LANG_LABEL[code];
+        b.className = code === lang ? 'on' : '';
+        b.setAttribute('aria-pressed', code === lang ? 'true' : 'false');
+        b.addEventListener('click', () => setLang(code));
+        $langSw.appendChild(b);
+      });
+    }
+
+    function renderFilter() {
+      $filter.innerHTML = '';
+      const tabs = L().tabs;
+      ['all','spa','dining','transfer','whisky','kimono'].forEach(id => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.setAttribute('role','tab');
+        b.className = 'ftab' + (id === activeTab ? ' on' : '');
+        b.textContent = tabs[id]; b.dataset.tab = id;
+        $filter.appendChild(b);
+      });
+    }
+
+    function renderGroups() {
+      $main.innerHTML = '';
+      const u = L();
+      GROUPS.forEach(g => {
+        const sec = document.createElement('section');
+        sec.className = 'group'; sec.dataset.gid = g.id;
+        if (activeTab !== 'all' && activeTab !== g.id) sec.classList.add('hidden');
+
+        // section header
+        const head = document.createElement('div');
+        head.className = 'sec-head';
+        head.innerHTML =
+          '<span class="sec-label">' + u.secLabels[g.id] + '</span>' +
+          '<h2 class="sec-title" style="font-size:.92rem;font-weight:800;color:var(--ink);">' + u.secTitles[g.id] + '</h2>' +
+          '<div class="sec-rule"></div>';
+
+        // rows
+        const list = document.createElement('div');
+        list.className = 'group-list';
+        g.items.forEach(it => {
+          const copy = it[lang];
+          const d    = getDist(it);
+          const row  = document.createElement('div');
+          row.className = 'srow';
+          row.innerHTML =
+            '<div class="srow-main">' +
+              '<h3>' + copy.name + '</h3>' +
+              '<p>'  + copy.note + '</p>' +
+            '</div>' +
+            '<div class="srow-meta">' +
+              '<span class="srow-dist">' + d + '</span>' +
+              '<button type="button" class="srow-book" data-book>' + u.btnBook + '</button>' +
+            '</div>';
+          list.appendChild(row);
+        });
+
+        sec.appendChild(head);
+        sec.appendChild(list);
+        $main.appendChild(sec);
+      });
+    }
+
+    function applyFilter() {
+      $main.querySelectorAll('.group').forEach(sec => {
+        const id = sec.dataset.gid;
+        sec.classList.toggle('hidden', activeTab !== 'all' && activeTab !== id);
+      });
+    }
+
+    /* ─── setLang ─────────────────────────────────── */
+    function setLang(next) {
+      if (!LANGS.includes(next)) return;
+      lang = next;
+      try { localStorage.setItem('bnbHubLang', lang); } catch(_){}
+      const u = new URL(location.href);
+      u.searchParams.set('lang', lang);
+      history.replaceState(null, '', u.pathname + u.search);
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang === 'ja' ? 'ja' : 'en';
+      renderChrome(); renderLangButtons(); renderFilter(); renderGroups();
+    }
+
+    /* ─── Events ──────────────────────────────────── */
+    $filter.addEventListener('click', e => {
+      const b = e.target.closest('.ftab'); if (!b) return;
+      activeTab = b.dataset.tab || 'all';
+      renderFilter(); applyFilter();
+    });
+    $main.addEventListener('click', e => {
+      if (e.target.matches('[data-book]')) alert(L().alertBook);
+    });
+    $btnCta.addEventListener('click', () => alert(L().alertCta));
+
+    /* ─── Init ────────────────────────────────────── */
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang === 'ja' ? 'ja' : 'en';
+    renderChrome(); renderLangButtons(); renderFilter(); renderGroups();
+  })();
+  </script>
+</body>
+</html>
