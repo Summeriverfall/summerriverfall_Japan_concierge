@@ -872,7 +872,7 @@
   let activeCat = 'all';
   let q         = '';
   const stayId  = detectStay();
-  // 排序：default = 手动推荐顺序 / stay = 离民宿最近 / me = 离用户最近
+  // 排序：default = 手动推荐顺序 / stay = 离所选位置最近 / me = 离用户最近
   let sortMode  = 'default';
   let userPos   = null;   // {lat, lon}，定位成功后缓存
   let geoState  = 'idle'; // idle | loading | ok | error
@@ -933,7 +933,7 @@
       cats:     { all:'全部', spa:'SPA', dining:'餐厅', transfer:'接送机', whisky:'酒吧', kimono:'体验' },
       sortLbl:  '排序',
       sortDefault: '推荐',
-      sortStay: '离民宿最近',
+      sortStay: '离所选位置最近',
       sortMe:   '离我最近',
       locating: '定位中…',
       geoFail:  '无法获取您的位置，请检查定位权限后重试',
@@ -972,7 +972,7 @@
       cats:     { all:'All', spa:'SPA', dining:'Dining', transfer:'Transfer', whisky:'Bar', kimono:'Experience' },
       sortLbl:  'Sort',
       sortDefault: 'Featured',
-      sortStay: 'Near guesthouse',
+      sortStay: 'Near selected location',
       sortMe:   'Near me',
       locating: 'Locating…',
       geoFail:  'Could not get your location. Please check location permission and try again.',
@@ -1011,7 +1011,7 @@
       cats:     { all:'すべて', spa:'SPA', dining:'レストラン', transfer:'送迎', whisky:'バー', kimono:'体験' },
       sortLbl:  '並び替え',
       sortDefault: 'おすすめ',
-      sortStay: '宿から近い順',
+      sortStay: '選択位置から近い順',
       sortMe:   '現在地から近い順',
       locating: '位置情報を取得中…',
       geoFail:  '位置情報を取得できませんでした。位置情報の許可をご確認ください。',
