@@ -97,31 +97,31 @@
     .loc-btn {
       display: inline-flex; align-items: center; gap: .32rem;
       padding: .28rem .5rem;
-      background: rgba(255,255,255,.82);
+      background: var(--brand);
       backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(20,34,31,.12);
+      border: 1.5px solid var(--brand);
       border-radius: 8px;
       font-size: .72rem; font-weight: 600;
-      color: var(--ink); cursor: pointer;
+      color: #fff; cursor: pointer;
       max-width: 70vw; white-space: nowrap; overflow: hidden;
       font-family: inherit; line-height: 1.4;
       transition: background .15s, border-color .15s;
     }
-    .loc-btn:hover, .loc-btn:active { background: rgba(255,255,255,.95); border-color: rgba(20,34,31,.25); }
+    .loc-btn:hover, .loc-btn:active { background: var(--brand-dk); border-color: var(--brand-dk); }
     .loc-btn .loc-pin {
       flex-shrink: 0; width: 14px; height: 14px;
       display: flex; align-items: center; justify-content: center;
-      color: var(--brand);
+      color: #fff;
     }
     .loc-btn .loc-label {
       flex: 1; overflow: hidden; text-overflow: ellipsis;
-      min-width: 0; color: var(--sub);
+      min-width: 0; color: #fff;
     }
     .loc-btn .loc-chevron {
       flex-shrink: 0; width: 12px; height: 12px;
-      color: var(--muted); transition: transform .2s;
+      color: rgba(255,255,255,.7); transition: transform .2s;
     }
-    .loc-btn.dirty .loc-label { color: var(--brand); font-weight: 700; }
+    .loc-btn.dirty .loc-label { color: #fff; font-weight: 700; }
 
     /* ── 地址选择抽屉 ────────────────────────────────── */
     .loc-drawer-mask {
