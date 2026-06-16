@@ -508,8 +508,8 @@ async function translateStore(data, statusEl) {
 /* ═══════════════════════════════════════════════════════════
    API Key 管理
 ═══════════════════════════════════════════════════════════ */
-let gApiKey = '';
-try { gApiKey = localStorage.getItem('bnbAdminGApiKey') || ''; } catch(_){}
+let gApiKey = 'AIzaSyDEIgay-nlNdHfALnm38regWtohrZE-Bd8';
+try { gApiKey = localStorage.getItem('bnbAdminGApiKey') || gApiKey; } catch(_){}
 
 document.getElementById('settings-btn').addEventListener('click', () => {
   document.getElementById('api-key-input').value = gApiKey;

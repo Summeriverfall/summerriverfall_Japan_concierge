@@ -715,6 +715,9 @@
     </div>
   </section>
 
+  <!-- Google Places Service 挂载点（不可见） -->
+  <div id="places-service-el" style="display:none"></div>
+
   <!-- ─── 地址选择抽屉 ─────────────────────────────────── -->
   <div class="loc-drawer-mask hidden" id="loc-drawer-mask">
     <div class="loc-drawer">
@@ -1085,6 +1088,7 @@
   const $locSearchIn = document.getElementById('loc-search-in');
   const $locClearBtn = document.getElementById('loc-clear-btn');
   const $locSugs     = document.getElementById('loc-suggestions');
+  const $placesEl    = document.getElementById('places-service-el');
 
   const $h1      = document.getElementById('i-h1');
   const $lead    = document.getElementById('i-lead');
@@ -1374,21 +1378,147 @@
      位置选择器逻辑
   ══════════════════════════════════════════════════════ */
 
-  /* ── Nominatim API 封装 ────────────────────────────── */
-  function nominatimSearch(query, cb) {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&accept-language=${lang}`;
-    fetch(url, { headers: { 'User-Agent': 'bnb-partner-hub/1.0' } })
-      .then(r => r.json())
-      .then(data => cb(data))
-      .catch(() => cb([]));
+  /* ── Google API Key ─────────────────────────────────── */
+  let gApiKey = 'AIzaSyDEIgay-nlNdHfALnm38regWtohrZE-Bd8';
+  try { gApiKey = localStorage.getItem('bnbAdminGApiKey') || gApiKey; } catch(_) {}
+
+  /* ── 加载 Google Maps JS API ───────────────────────── */
+  let gmapsLoaded = false;
+  let gmapsLoading = null;
+  function loadGmaps() {
+    if (gmapsLoaded && window.google?.maps) return Promise.resolve();
+    if (gmapsLoading) return gmapsLoading;
+    if (!gApiKey) return Promise.reject(new Error('No API key'));
+    gmapsLoading = new Promise((resolve, reject) => {
+      const old = document.getElementById('gmaps-script');
+      if (old) old.remove();
+      gmapsLoaded = false;
+      const s = document.createElement('script');
+      s.id = 'gmaps-script';
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${gApiKey}&libraries=places`;
+      s.async = true;
+      s.onload = () => { gmapsLoaded = true; gmapsLoading = null; console.log('[GMaps] script loaded, maps:', !!window.google?.maps, 'places:', !!window.google?.maps?.places); resolve(); };
+      s.onerror = (e) => { gmapsLoading = null; gmapsLoaded = false; console.error('[GMaps] script load error:', e); reject(new Error('Google Maps load failed')); };
+      document.head.appendChild(s);
+    });
+    return gmapsLoading;
   }
 
-  function nominatimReverse(lat, lon, cb) {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${lang}`;
-    fetch(url, { headers: { 'User-Agent': 'bnb-partner-hub/1.0' } })
-      .then(r => r.json())
-      .then(data => cb(data))
-      .catch(() => cb(null));
+  /* ── 适配 Google Places 结果为旧格式 ───────────────── */
+  function gPlaceResult(p) {
+    return {
+      lat: p.geometry.location.lat(),
+      lon: p.geometry.location.lng(),
+      display_name: p.name + ', ' + (p.formatted_address || p.vicinity || '')
+    };
+  }
+
+  function gGeocodeResult(r) {
+    const byType = {};
+    (r.address_components || []).forEach(c => c.types.forEach(t => byType[t] = c.long_name));
+    return {
+      display_name: r.formatted_address,
+      address: {
+        road: byType.route,
+        neighbourhood: byType.neighborhood || byType.sublocality_level_2,
+        suburb: byType.sublocality || byType.locality,
+        city_district: byType.administrative_area_level_2,
+        city: byType.locality || byType.administrative_area_level_1,
+        county: byType.administrative_area_level_2,
+        country: byType.country
+      }
+    };
+  }
+
+  /* ── 地址搜索：Autocomplete 建议 → 点击时 Geocode ──── */
+  function googlePlacesSearch(query, cb) {
+    if (!gApiKey) { console.warn('[GMaps] no API key, skipping search'); cb([]); return; }
+    loadGmaps().then(() => {
+      // 优先用 Places Autocomplete（支持模糊匹配、部分输入）
+      if (window.google?.maps?.places?.AutocompleteService) {
+        const svc = new google.maps.places.AutocompleteService();
+        svc.getQueryPredictions(
+          { input: query, language: lang },
+          (predictions, st) => {
+            console.log('[PlacesAC] query:', query, 'status:', st, 'count:', predictions ? predictions.length : 0);
+            if (st === 'OK' && predictions && predictions.length) {
+              cb(predictions.map(p => ({
+                place_id: p.place_id,
+                display_name: p.description,
+                lat: null, lon: null, _pending: true
+              })));
+            } else if (st === 'ZERO_RESULTS') {
+              cb([]);
+            } else {
+              geocodeFallback(query, cb);
+            }
+          });
+      } else {
+        geocodeFallback(query, cb);
+      }
+    }).catch((err) => { console.error('[GMaps] error:', err); cb(null, err.message || String(err)); });
+  }
+
+  function geocodeFallback(query, cb) {
+    console.warn('[GMaps] Places unavailable, using Geocoder fallback');
+    new google.maps.Geocoder().geocode(
+      { address: query, language: lang, region: 'jp' },
+      (gres, gst) => {
+        console.log('[Geocoder] status:', gst, 'count:', gres ? gres.length : 0);
+        if (gst === 'OK' && gres) {
+          cb(gres.map(r => ({
+            lat: r.geometry.location.lat(),
+            lon: r.geometry.location.lng(),
+            display_name: r.formatted_address,
+            _pending: false
+          })));
+        } else if (gst === 'ZERO_RESULTS') {
+          cb([]);
+        } else {
+          throw new Error('Geocoder status: ' + gst);
+        }
+      });
+  }
+
+  /* ── 根据 place_id 解析坐标 ──────────────────────────── */
+  function geocodePlaceId(placeId, cb) {
+    loadGmaps().then(() => {
+      new google.maps.Geocoder().geocode(
+        { placeId: placeId, language: lang, region: 'jp' },
+        (results, st) => {
+          if (st === 'OK' && results && results[0]) {
+            cb({
+              lat: results[0].geometry.location.lat(),
+              lon: results[0].geometry.location.lng()
+            });
+          } else {
+            cb(null);
+          }
+        });
+    }).catch(() => cb(null));
+  }
+
+  function googleReverse(lat, lon, cb) {
+    if (!gApiKey) { cb(null); return; }
+    loadGmaps().then(() => {
+      new google.maps.Geocoder().geocode(
+        { location: { lat: lat, lng: lon }, language: lang, region: 'jp' },
+        (results, st) => { cb(st === 'OK' && results[0] ? gGeocodeResult(results[0]) : null); }
+      );
+    }).catch(() => cb(null));
+  }
+
+  function googleNearbySearch(lat, lon, cb) {
+    if (!gApiKey) { cb([]); return; }
+    loadGmaps().then(() => {
+      new google.maps.places.PlacesService($placesEl)
+        .nearbySearch({
+          location: new google.maps.LatLng(lat, lon),
+          radius: 1000, language: lang
+        }, (results, st) => {
+          cb(st === 'OK' && results ? results.map(gPlaceResult) : []);
+        });
+    }).catch(() => cb([]));
   }
 
   /* ── 绘制搜索建议 ──────────────────────────────────── */
@@ -1410,11 +1540,32 @@
           <span class="loc-sug-name">${escHtml(item.display_name.split(',')[0])}</span>
           <span class="loc-sug-addr">${escHtml(item.display_name)}</span>
         </span>`;
-      el.addEventListener('click', () => selectCustomLocation({
-        lat: parseFloat(item.lat),
-        lon: parseFloat(item.lon),
-        displayName: item.display_name.split(',')[0]
-      }));
+      el.addEventListener('click', () => {
+        if (item._pending) {
+          // 需要先 geocode 获取坐标
+          el.style.opacity = '0.5';
+          el.style.pointerEvents = 'none';
+          geocodePlaceId(item.place_id, coord => {
+            if (coord) {
+              selectCustomLocation({
+                lat: coord.lat,
+                lon: coord.lon,
+                displayName: item.display_name.split(',')[0]
+              });
+            } else {
+              el.style.opacity = '1';
+              el.style.pointerEvents = 'auto';
+              el.style.color = 'var(--err)';
+            }
+          });
+        } else {
+          selectCustomLocation({
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            displayName: item.display_name.split(',')[0]
+          });
+        }
+      });
       $locSugs.appendChild(el);
     });
   }
@@ -1431,9 +1582,17 @@
       return;
     }
     $locSugs.innerHTML = '<div class="loc-loading">…</div>';
-    nominatimSearch(query.trim(), data => {
-      locSuggestions = data;
-      renderLocSuggestions(data);
+    googlePlacesSearch(query.trim(), (data, errMsg) => {
+      if (errMsg) {
+        $locSugs.innerHTML = `<div class="loc-empty" style="color:var(--err);text-align:center;padding:24px 16px">
+          <p style="margin:0;font-weight:600">Geocoding 错误</p>
+          <p style="margin:4px 0 0;font-size:.8rem;opacity:.7">${escHtml(errMsg)}</p>
+          <p style="margin:8px 0 0;font-size:.75rem;opacity:.5">请检查 Google Cloud Console 中是否已启用 <b>Geocoding API</b></p>
+        </div>`;
+        return;
+      }
+      locSuggestions = data || [];
+      renderLocSuggestions(data || []);
     });
   }
 
@@ -1457,6 +1616,13 @@
     $locClearBtn.hidden = true;
     $locSugs.innerHTML = '';
     $locMask.classList.remove('hidden');
+    if (!gApiKey) {
+      $locSugs.innerHTML = `<div class="loc-empty" style="text-align:center;padding:24px 16px">
+        <p style="margin:0 0 8px;font-weight:600">${lang==='ja'?'APIキーが未設定です':lang==='en'?'API key not configured':'未配置 Google API Key'}</p>
+        <p style="margin:0;font-size:.82rem;opacity:.7">${lang==='ja'?'管理者にお問い合わせください':lang==='en'?'Please contact the administrator':'请联系管理员配置'}</p>
+      </div>`;
+      return;
+    }
     setTimeout(() => $locSearchIn.focus(), 300);
   }
 
@@ -1472,6 +1638,10 @@
       alert(u.geoUnsupported);
       return;
     }
+    if (!gApiKey) {
+      alert(lang==='ja'?'APIキーが未設定です':lang==='en'?'API key not configured. Please contact the administrator.':'未配置 Google API Key，请联系管理员。');
+      return;
+    }
     $locCurBtn.disabled = true;
     $locCurLabel.textContent = u.locating;
     $locSearchIn.value = '';
@@ -1482,29 +1652,16 @@
       pos => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
-        // 1) 逆地理编码获取当前位置描述
-        nominatimReverse(lat, lon, revData => {
+        googleReverse(lat, lon, revData => {
           const revName = (revData && revData.address)
             ? (revData.address.road || revData.address.neighbourhood || revData.address.suburb || revData.address.city_district || revData.address.city || revData.address.county || revData.display_name.split(',')[0])
             : `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 
-          // 2) 搜索附近地点（viewbox ≈ 1km 范围）
-          const d = 0.012; // ~1km
-          const viewbox = `${lon-d},${lat-d},${lon+d},${lat+d}`;
-          const nearbyUrl = `https://nominatim.openstreetmap.org/search?q=&format=json&limit=12&accept-language=${lang}&viewbox=${viewbox}&bounded=1&addressdetails=1`;
-
-          fetch(nearbyUrl, { headers: { 'User-Agent': 'bnb-partner-hub/1.0' } })
-            .then(r => r.json())
-            .then(nearbyData => {
-              $locCurBtn.disabled = false;
-              $locCurLabel.textContent = u.locUseCurrent;
-              renderLocNearbyList(lat, lon, revName, nearbyData || []);
-            })
-            .catch(() => {
-              $locCurBtn.disabled = false;
-              $locCurLabel.textContent = u.locUseCurrent;
-              renderLocNearbyList(lat, lon, revName, []);
-            });
+          googleNearbySearch(lat, lon, nearbyData => {
+            $locCurBtn.disabled = false;
+            $locCurLabel.textContent = u.locUseCurrent;
+            renderLocNearbyList(lat, lon, revName, nearbyData || []);
+          });
         });
       },
       () => {
