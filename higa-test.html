@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>合作体验 · Test</title>
+
+  <!-- ── 页面打开统计（与 booking-cs 共用 Google Sheet）──── -->
+  <script>
+  (function () {
+    var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzSD362gcahdmKAWhiYyiPfEXeYnm0SXfBsTJIKx1g7pkMTogd7EtG0O59Gs_rEsX8/exec';
+    window.__CS_STATS_ENDPOINT = ENDPOINT;
+
+    /* higa.html 固定记为 page=higa；client=onya 便于表格区分客户 */
+    var _client = 'onya';
+    window.__CS_CLIENT = _client;
+    var _page = 'higa';
+
+    window.__csTrack = function (opts) {
+      if (!ENDPOINT) return;
+      opts = opts || {};
+      var parts = [
+        'action=' + encodeURIComponent(opts.action || 'hit'),
+        'page=' + encodeURIComponent(_page),
+        'lang=' + encodeURIComponent(document.documentElement.lang || 'zh-CN'),
+        'client=' + encodeURIComponent(_client)
+      ];
+      if (opts.action === 'hit' || !opts.action) {
+        var title = opts.title || document.title || '';
+        if (title.indexOf('onya') < 0 && title.indexOf('Onya') < 0 && title.indexOf('御屋') < 0) {
+          title = 'onya · ' + title;
+        }
+        parts.push('title=' + encodeURIComponent(String(title).slice(0, 120)));
+      }
+      if (opts.btn) parts.push('btn=' + encodeURIComponent(String(opts.btn).slice(0, 64)));
+      if (opts.label) parts.push('label=' + encodeURIComponent(String(opts.label).slice(0, 120)));
+      new Image().src = ENDPOINT + '?' + parts.join('&');
+    };
+
+    /* 本地关闭 PV 打点（恢复时取消下一行注释） */
+    // __csTrack({ action: 'hit' });
+  })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
+  <script src="stores.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f0f4f3;
+      --surface:  #ffffff;
+      --ink:      #14221f;
+      --sub:      #4e6560;
+      --muted:    #8fa39e;
+      --line:     #e2ebe8;
+      --brand:    #0f766e;
+      --brand-dk: #134e4a;
+      --tag-bg:   #e2efed;
+      --radius:   14px;
+      --safe-b:   max(1rem, env(safe-area-inset-bottom));
+    }
+
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Kaku Gothic ProN", sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      padding-bottom: calc(4.5rem + var(--safe-b));
+    }
+
+    /* ══════════════════════════════════════════
+       HERO  — 地图背景版
+    ══════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      border-radius: 0 0 26px 26px;
+      overflow: hidden;
+      /* 地图加载前的过渡底色 */
+      background: #dde8e4;
+      min-height: 210px;
+    }
+
+    /* 地图背景层 */
+    .hero-map {
+      position: absolute; inset: 0; z-index: 0;
+      overflow: hidden;
+    }
+    /* 用 img + object-fit:cover 保持原图清晰度
+       参考坐标：東山区清閑院蛤屋町394-4
+       lat: 35.01021, lon: 135.77801
+    */
+    .hero-map img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      /* 地图截图中该坐标约在图片 45% 宽 / 30% 高处 */
+      object-position: 45% 30%;
+    }
+
+    /* 渐变遮罩：顶部透明展示地图，底部半磨砂承载文字 */
+    .hero-veil {
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(
+        to bottom,
+        rgba(245,249,247,.08)  0%,
+        rgba(245,249,247,.45) 38%,
+        rgba(245,249,247,.82) 62%,
+        rgba(245,249,247,.96) 100%
+      );
+    }
+
+    /* 文字内容层 */
+    .hero-inner {
+      position: relative; z-index: 2;
+      padding: 1.1rem 1.25rem 1.55rem;
+      /* 文字推到下半部分，上半部分留给地图 */
+      display: flex; flex-direction: column;
+      justify-content: flex-end; min-height: 210px;
+    }
+
+    /* 顶行：文案 + 语言切换（绝对定位在顶部） */
+    .hero-top {
+      position: absolute; top: 1rem; left: 1.25rem; right: 1.25rem;
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: .6rem;
+    }
+    /* ── 位置选择按钮 ──────────────────────────────── */
+    .loc-btn {
+      display: inline-flex; align-items: center; gap: .32rem;
+      padding: .28rem .5rem;
+      background: var(--brand);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid var(--brand);
+      border-radius: 8px;
+      font-size: .72rem; font-weight: 600;
+      color: #fff; cursor: pointer;
+      max-width: 70vw; white-space: nowrap; overflow: hidden;
+      font-family: inherit; line-height: 1.4;
+      transition: background .15s, border-color .15s;
+    }
+    .loc-btn:hover, .loc-btn:active { background: var(--brand-dk); border-color: var(--brand-dk); }
+    .loc-btn .loc-pin {
+      flex-shrink: 0; width: 14px; height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    .loc-btn .loc-label {
+      flex: 1; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0; color: #fff;
+    }
+    .loc-btn .loc-chevron {
+      flex-shrink: 0; width: 12px; height: 12px;
+      color: rgba(255,255,255,.7); transition: transform .2s;
+    }
+    .loc-btn.dirty .loc-label { color: #fff; font-weight: 700; }
+
+    /* ── 地址选择抽屉 ────────────────────────────────── */
+    .loc-drawer-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 200; animation: fadeIn 200ms;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .loc-drawer-mask.hidden { display: none; }
+    .loc-drawer {
+      width: 100%; max-width: 480px; max-height: 85dvh;
+      background: #fff; border-radius: 16px 16px 0 0;
+      display: flex; flex-direction: column;
+      animation: slideUp 280ms ease-out;
+      overflow: hidden;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .loc-drawer-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .9rem 1rem; border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .loc-drawer-head h3 { font-size: .95rem; font-weight: 700; }
+    .loc-drawer-close {
+      appearance: none; border: none; background: transparent;
+      font-size: 1.3rem; color: var(--muted); cursor: pointer;
+      padding: .25rem; line-height: 1;
+    }
+    .loc-drawer-body { flex: 1; overflow-y: auto; padding: .75rem 1rem 1.5rem; }
+
+    /* 自动定位按钮 */
+    .loc-current-btn {
+      display: flex; align-items: center; gap: .5rem;
+      width: 100%; padding: .7rem .85rem;
+      background: var(--brand); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: .84rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      margin-bottom: .85rem; transition: background .15s;
+    }
+    .loc-current-btn:hover { background: var(--brand-dk); }
+    .loc-current-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .loc-current-btn svg { flex-shrink: 0; }
+
+    /* 搜索栏 */
+    .loc-search-row {
+      display: flex; align-items: center; gap: .4rem;
+      background: var(--bg); border: 1.5px solid var(--line);
+      border-radius: 10px; padding: 0 .65rem;
+      margin-bottom: .6rem; transition: border-color .18s;
+    }
+    .loc-search-row:focus-within { border-color: var(--brand); background: #fff; }
+    .loc-search-row input {
+      flex: 1; border: none; background: transparent;
+      padding: .55rem 0; font-size: .84rem;
+      color: var(--ink); outline: none; font-family: inherit;
+    }
+    .loc-search-row input::placeholder { color: var(--muted); }
+
+    /* 建议列表 */
+    .loc-suggestions { display: flex; flex-direction: column; }
+    .loc-suggestion {
+      display: flex; align-items: flex-start; gap: .55rem;
+      padding: .65rem .2rem; border-bottom: 1px solid var(--line);
+      cursor: pointer; font-size: .8rem; line-height: 1.45;
+      transition: background .1s;
+    }
+    .loc-suggestion:hover { background: var(--bg); }
+    .loc-suggestion:last-child { border-bottom: none; }
+    .loc-suggestion .loc-sug-pin {
+      flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px;
+      color: var(--muted);
+    }
+    .loc-suggestion .loc-sug-name { color: var(--muted); font-size: .73rem; margin-top: 1px; }
+    .loc-suggestion .loc-sug-addr { font-weight: 600; color: var(--ink); }
+    .loc-suggestion-current { background: rgba(15,118,110,.06); border-radius: 8px; padding: .65rem .55rem; margin: 0 -.35rem; }
+    .loc-nearby-sep { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: .85rem .2rem .35rem; }
+    .loc-empty { text-align: center; color: var(--muted); padding: 1.5rem 0; font-size: .8rem; }
+    .loc-loading { text-align: center; color: var(--muted); padding: 1rem 0; font-size: .8rem; }
+
+    /* 民宿名徽章已合并进距离说明行，元素保留但不渲染 */
+    .prop-badge { display: none; }
+
+    /* 标题 — 深绿，衬线，单行 */
+    .hero h1 {
+      font-family: "Noto Serif SC", "Noto Serif JP", serif;
+      font-size: 1.48rem; font-weight: 700;
+      line-height: 1.2; letter-spacing: .02em;
+      color: var(--brand-dk); /* 深品牌绿，比纯黑柔和 */
+      white-space: nowrap;
+    }
+    html[lang="en"] .hero h1 {
+      font-size: 1.22rem; white-space: normal;
+    }
+    .hero-rule {
+      width: 2rem; height: 2px; border-radius: 2px;
+      background: var(--brand);
+      margin: .85rem 0;
+    }
+    .hero-lead {
+      font-size: .84rem; color: var(--sub);
+      line-height: 1.6; max-width: 26em;
+    }
+    .hero-dist-note {
+      margin-top: .5rem; font-size: .72rem;
+      color: var(--brand); font-weight: 500;
+    }
+
+    /* 语言切换 — 毛玻璃胶囊 */
+    .lang-sw { display: flex; gap: .15rem; flex-shrink: 0; }
+    .lang-sw button {
+      appearance: none;
+      border: 1.5px solid rgba(20,34,31,.15);
+      background: rgba(255,255,255,.78);
+      color: var(--sub);
+      font-size: .6rem; font-weight: 700;
+      padding: .25rem .42rem; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+      backdrop-filter: blur(8px);
+    }
+    .lang-sw button.on {
+      background: var(--ink); color: #fff;
+      border-color: var(--ink);
+    }
+
+    /* ══════════════════════════════════════════
+       STICKY CONTROLS — 搜索栏 + 分类胶囊
+    ══════════════════════════════════════════ */
+    .controls {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(240,244,243,.97);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+      padding: .55rem 1.1rem 0;
+    }
+
+    /* 搜索栏 */
+    .search-row { margin-bottom: .5rem; }
+    .search-box {
+      display: flex; align-items: center; gap: .4rem;
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: 11px; padding: 0 .72rem;
+      transition: border-color .18s;
+    }
+    .search-box:focus-within { border-color: var(--brand); }
+    .s-ico { color: var(--muted); flex-shrink: 0; display: flex; }
+    .search-box input {
+      flex: 1; border: none; background: transparent;
+      padding: .52rem 0; font-size: .86rem;
+      color: var(--ink); outline: none; font-family: inherit;
+    }
+    .search-box input::placeholder { color: var(--muted); }
+    .clear-btn {
+      appearance: none; border: none; background: transparent;
+      color: var(--muted); cursor: pointer; padding: .25rem;
+      display: flex; align-items: center;
+    }
+
+    /* 分类胶囊 */
+    .chips {
+      display: flex; gap: .3rem; overflow-x: auto;
+      padding-bottom: .5rem; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: 0 0 auto; white-space: nowrap;
+      padding: .33rem .72rem; border-radius: 999px;
+      font-size: .76rem;
+      border: 1.5px solid var(--line);
+      background: var(--surface); color: var(--sub);
+      cursor: pointer; font-family: inherit;
+    }
+    .chip.on {
+      background: var(--brand); border-color: var(--brand);
+      color: #fff; font-weight: 600;
+    }
+    /* 探索引导：餐厅/酒吧/体验 — 黄橙渐变呼吸光 */
+    .chip.hint:not(.on) {
+      border-color: #f59e0b;
+      color: #c2410c;
+      background: linear-gradient(135deg, #fffbeb 0%, #ffedd5 55%, #fed7aa 100%);
+      box-shadow: 0 0 0 0 rgba(249, 115, 22, .4);
+      animation: chipHintPulse 1.7s ease-in-out infinite;
+    }
+    @keyframes chipHintPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, .55), 0 0 10px rgba(249, 115, 22, .25);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 5px rgba(251, 191, 36, .28), 0 0 16px rgba(249, 115, 22, .35);
+        transform: scale(1.05);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chip.hint:not(.on) {
+        animation: none;
+        box-shadow: 0 0 0 3px rgba(251, 191, 36, .35);
+      }
+    }
+    .explore-hint {
+      display: none;
+      margin: -.15rem 0 .45rem;
+      padding: 0 .1rem;
+      font-size: .72rem;
+      font-weight: 650;
+      line-height: 1.4;
+      color: #c2410c;
+      letter-spacing: .01em;
+    }
+    .explore-hint.show { display: block; }
+    .explore-hint strong {
+      color: #ea580c;
+      font-weight: 800;
+    }
+
+    /* 探索奖励优惠券：右下角浮层（醒目橙红） */
+    .coupon-toast {
+      position: fixed;
+      right: max(.75rem, env(safe-area-inset-right));
+      bottom: calc(4.6rem + var(--safe-b));
+      z-index: 250;
+      width: min(320px, calc(100vw - 1.5rem));
+      max-height: min(78vh, 560px);
+      overflow-y: auto;
+      padding: 1.05rem 1rem .95rem;
+      border-radius: 18px;
+      background: linear-gradient(165deg, #fff7ed 0%, #fff 42%, #fff1f2 100%);
+      border: 2px solid #f97316;
+      box-shadow: 0 14px 40px rgba(194, 65, 12, .28), 0 0 0 1px rgba(239, 68, 68, .12);
+      transform: translateY(12px) scale(.96);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s ease, transform .28s ease;
+    }
+    .coupon-toast.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .coupon-close {
+      position: absolute; top: .45rem; right: .5rem;
+      width: 28px; height: 28px; border: none; border-radius: 8px;
+      background: transparent; color: #9a3412; cursor: pointer;
+      font-size: .9rem; line-height: 1;
+    }
+    .coupon-eyebrow {
+      margin: 0 1.4rem 0 0;
+      font-size: .68rem; font-weight: 800; letter-spacing: .06em;
+      color: #ea580c; text-transform: uppercase;
+    }
+    .coupon-title {
+      margin: .28rem 1.2rem .35rem 0;
+      font-size: 1.02rem; font-weight: 800; color: #9f1239;
+      line-height: 1.35;
+    }
+    .coupon-desc {
+      margin: 0 0 .65rem;
+      font-size: .72rem; color: #9a3412; line-height: 1.45;
+    }
+    .coupon-code {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: .75rem; padding: .58rem .7rem;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #fff7ed, #ffe4e6);
+      border: 1.5px dashed #f97316;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 1.08rem; font-weight: 800; letter-spacing: .1em;
+      color: #c2410c;
+    }
+    .coupon-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .45rem .5rem;
+      margin-bottom: .65rem;
+    }
+    .coupon-field {
+      display: flex; flex-direction: column; gap: .2rem;
+    }
+    .coupon-field.full { grid-column: 1 / -1; }
+    .coupon-field label {
+      font-size: .68rem; font-weight: 700; color: #9a3412;
+    }
+    .coupon-field input {
+      width: 100%; box-sizing: border-box;
+      padding: .48rem .55rem; border-radius: 8px;
+      border: 1.5px solid #fdba74;
+      background: #fff; color: var(--ink);
+      font-family: inherit; font-size: .8rem;
+    }
+    .coupon-field input:focus {
+      outline: none; border-color: #ea580c;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, .18);
+    }
+    .coupon-field input.err {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, .15);
+    }
+    .coupon-preview {
+      margin-bottom: .7rem;
+      border-radius: 10px;
+      border: 1px solid #fdba74;
+      background: #fff;
+      overflow: hidden;
+    }
+    .coupon-preview-head {
+      display: flex; align-items: center; gap: .35rem;
+      padding: .45rem .6rem;
+      background: #fff7ed;
+      border-bottom: 1px solid #fed7aa;
+      font-size: .7rem; font-weight: 700; color: #c2410c;
+    }
+    .coupon-preview-head svg { width: 14px; height: 14px; fill: #1E8E4F; flex-shrink: 0; }
+    .coupon-preview-body {
+      display: none;
+      margin: 0; padding: .65rem .7rem;
+      font-family: inherit; font-size: .74rem; line-height: 1.55;
+      white-space: pre-wrap; word-break: break-word; color: var(--ink);
+    }
+    .coupon-preview-hint {
+      margin: 0; padding: .65rem .7rem;
+      font-size: .72rem; color: #a16207; font-style: italic;
+    }
+    .coupon-preview.ready .coupon-preview-body { display: block; }
+    .coupon-preview.ready .coupon-preview-hint { display: none; }
+    .coupon-actions {
+      display: flex; flex-direction: column; gap: .4rem;
+    }
+    .coupon-submit {
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
+      width: 100%; padding: .68rem .7rem; border-radius: 10px;
+      border: none; cursor: pointer; font-family: inherit;
+      font-size: .82rem; font-weight: 800; color: #fff;
+      background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+      box-shadow: 0 8px 18px rgba(239, 68, 68, .28);
+    }
+    .coupon-submit:disabled {
+      opacity: .55; cursor: not-allowed; box-shadow: none;
+    }
+    .coupon-submit svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+    /* 已领券后的常驻入口：再次打开领取 */
+    .coupon-entry {
+      display: none;
+      position: fixed;
+      right: max(.75rem, env(safe-area-inset-right));
+      bottom: calc(4.6rem + var(--safe-b));
+      z-index: 240;
+      align-items: center; gap: .35rem;
+      padding: .55rem .85rem;
+      border-radius: 999px;
+      border: 1.5px solid #f97316;
+      background: linear-gradient(135deg, #fff7ed, #ffe4e6);
+      color: #c2410c;
+      font-family: inherit;
+      font-size: .78rem; font-weight: 800;
+      box-shadow: 0 8px 22px rgba(194, 65, 12, .18);
+      cursor: pointer;
+    }
+    .coupon-entry.show { display: inline-flex; }
+    .coupon-entry:active { background: #ffedd5; }
+
+    /* 排序按钮行 */
+    .sort-row {
+      display: flex; align-items: center; gap: .3rem;
+      overflow-x: auto; padding-bottom: .5rem;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .sort-row::-webkit-scrollbar { display: none; }
+    .sort-lbl {
+      flex: 0 0 auto; font-size: .68rem; color: var(--muted);
+      display: inline-flex; align-items: center; gap: .2rem;
+    }
+    .sort-btn {
+      flex: 0 0 auto; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: .25rem;
+      padding: .24rem .6rem; border-radius: 999px;
+      font-size: .7rem;
+      border: 1.5px solid transparent;
+      background: transparent; color: var(--muted);
+      cursor: pointer; font-family: inherit;
+    }
+    .sort-btn.on {
+      background: var(--tag-bg); color: var(--brand);
+      border-color: rgba(15,118,110,.25); font-weight: 600;
+    }
+    .sort-btn:disabled { opacity: .6; cursor: default; }
+
+    /* ══════════════════════════════════════════
+       CARDS — 参照示例图：左图右文
+    ══════════════════════════════════════════ */
+    .cards {
+      padding: .85rem 1rem .5rem;
+      display: flex; flex-direction: column; gap: .72rem;
+    }
+
+    .card {
+      display: flex; align-items: stretch;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      box-shadow: 0 2px 14px rgba(20,34,31,.05);
+    }
+
+    /* 左侧图片区 */
+    .card-img-wrap {
+      width: 96px; flex-shrink: 0;
+      position: relative; overflow: hidden;
+    }
+    /* 图片加载失败时的渐变兜底 */
+    .card[data-cat="spa"]      .card-img-wrap { background: linear-gradient(160deg,#c9b3d4,#8a62a8); }
+    .card[data-cat="dining"]   .card-img-wrap { background: linear-gradient(160deg,#e8c090,#c47840); }
+    .card[data-cat="transfer"] .card-img-wrap { background: linear-gradient(160deg,#96c4d8,#5080a0); }
+    .card[data-cat="whisky"]   .card-img-wrap { background: linear-gradient(160deg,#d4b880,#906030); }
+    .card[data-cat="kimono"]   .card-img-wrap { background: linear-gradient(160deg,#e8afc4,#b86090); }
+
+    .card-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+
+    /* 右侧内容区 */
+    .card-body {
+      flex: 1; min-width: 0;
+      padding: .7rem .85rem .65rem;
+      display: flex; flex-direction: column; gap: .2rem;
+    }
+
+    .card-row1 {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: .3rem;
+    }
+    .card-name {
+      font-size: .93rem; font-weight: 700;
+      color: var(--ink); line-height: 1.2;
+      flex: 1; min-width: 0;
+    }
+    .rec-badge {
+      display: none; /* 暂时隐藏优惠标签，需要恢复时删掉这一行 */
+      flex-shrink: 0;
+      font-size: .58rem; font-weight: 700;
+      color: #b45309; background: #fef3c7;
+      border: 1px solid #fde68a;
+      padding: .13rem .36rem; border-radius: 4px;
+      white-space: nowrap; line-height: 1.4;
+    }
+
+
+    .card-desc {
+      font-size: .78rem; color: var(--sub); line-height: 1.42;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    .card-tags {
+      display: flex; flex-wrap: wrap; gap: .2rem; margin-top: .06rem;
+    }
+    .tag {
+      font-size: .62rem; font-weight: 500;
+      padding: .13rem .38rem;
+      background: var(--tag-bg); color: var(--brand);
+      border-radius: 999px; white-space: nowrap;
+    }
+
+    .card-footer {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: .3rem;
+      margin-top: auto; padding-top: .3rem; flex-wrap: wrap;
+    }
+    .card-hours {
+      display: flex; align-items: center; gap: .24rem;
+      font-size: .7rem; color: var(--muted);
+    }
+
+    /* 预约按钮 — 清淡绿胶囊，固定在右侧 */
+    .book-btn {
+      display: inline-flex; align-items: center; gap: .22rem;
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1.5px solid rgba(21,128,61,.28);
+      border-radius: 999px;
+      padding: .3rem .62rem;
+      font-size: .72rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      margin-left: auto; /* 换行时仍保持靠右 */
+    }
+
+    /* ── WhatsApp 预约弹层 ──────────────────────────────── */
+    .wa-overlay {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.45);
+      align-items: flex-end; justify-content: center;
+    }
+    .wa-overlay.open { display: flex; }
+    .wa-sheet {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: 22px 22px 0 0;
+      padding: 1.35rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+      box-shadow: 0 -8px 40px rgba(0,0,0,.15);
+    }
+    .wa-sheet-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; margin-bottom: 1rem; gap: .5rem;
+    }
+    .wa-store-name {
+      font-size: .95rem; font-weight: 800; color: var(--ink);
+      line-height: 1.3; flex: 1;
+    }
+    .wa-close {
+      appearance: none; border: 1px solid var(--line); border-radius: 7px;
+      background: var(--bg); color: var(--muted); font-size: .75rem;
+      padding: .25rem .45rem; cursor: pointer; font-family: inherit;
+      flex-shrink: 0;
+    }
+    .wa-fields {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .55rem;
+      margin-bottom: .9rem;
+    }
+    .wa-field { display: flex; flex-direction: column; gap: .22rem; }
+    .wa-field label {
+      font-size: .72rem; font-weight: 600; color: var(--muted);
+    }
+    .wa-field input {
+      padding: .48rem .65rem; border: 1.5px solid var(--line);
+      border-radius: 9px; font-size: .86rem;
+      font-family: inherit; color: var(--ink); outline: none;
+    }
+    .wa-field input:focus { border-color: var(--brand); }
+    .wa-submit {
+      width: 100%; padding: .8rem; border-radius: 12px; border: none;
+      cursor: pointer; font-family: inherit; font-size: .9rem; font-weight: 800;
+      color: #fff; background: #25D366;
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
+      box-shadow: 0 6px 18px rgba(37,211,102,.28);
+    }
+
+    /* ── 渠道选择 ─────────────────────────────────────────── */
+    .plat-row { display: flex; gap: .4rem; margin-bottom: .85rem; }
+    .plat-btn {
+      flex: 1; padding: .42rem .2rem; border-radius: 9px;
+      border: 1.5px solid var(--line); background: var(--bg); color: var(--muted);
+      font-size: .74rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; line-height: 1.3; text-align: center;
+    }
+    .plat-badge { display: block; font-size: .6rem; font-weight: 600; opacity: .7; }
+    .plat-btn.on[data-plat="whatsapp"]{ border-color:#25D366; color:#1a9e52; background:#f0fdf4; }
+    .plat-btn.on[data-plat="line"]    { border-color:#00B900; color:#007a00; background:#f0fff0; }
+    .plat-btn.on[data-plat="wechat"]  { border-color:#07C160; color:#058549; background:#f0fdf8; }
+
+    /* ── 消息预览 & 操作 ──────────────────────────────────── */
+    .plat-act { display: none; }
+    .plat-act.on { display: block; }
+    .act-hint { font-size: .78rem; color: var(--muted); margin-bottom: .4rem; line-height: 1.5; }
+    .msg-box {
+      width: 100%; height: 105px; border: 1.5px solid var(--line); border-radius: 9px;
+      padding: .58rem .72rem; font-size: .77rem; font-family: inherit;
+      color: var(--ink); resize: none; background: var(--bg);
+      line-height: 1.55; margin-bottom: .5rem;
+    }
+    .act-btns { display: flex; gap: .4rem; }
+    .copy-btn {
+      flex: 1; padding: .62rem; border-radius: 10px;
+      border: 1.5px solid var(--line); background: var(--bg);
+      font-size: .82rem; font-weight: 700; cursor: pointer; font-family: inherit;
+      color: var(--ink);
+    }
+    .copy-btn.ok { border-color: var(--brand); color: var(--brand); }
+    .link-btn {
+      flex: 1.5; padding: .62rem; border-radius: 10px; border: none;
+      font-size: .82rem; font-weight: 700; cursor: pointer; font-family: inherit;
+      color: #fff; text-align: center; text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .line-btn   { background: #00B900; }
+    .wechat-btn { background: #07C160; }
+    .qr-wrap { display: none; text-align: center; margin-top: .72rem; }
+    .qr-wrap.show { display: block; }
+    .qr-wrap img { width: 160px; border-radius: 12px; border: 1px solid var(--line); }
+    .qr-wrap p { font-size: .72rem; color: var(--muted); margin-top: .35rem; }
+
+    /* ══════════════════════════════════════════
+       空结果 / 底部栏
+    ══════════════════════════════════════════ */
+    .no-results {
+      text-align: center; padding: 3rem 1.5rem;
+      font-size: .87rem; color: var(--muted);
+    }
+    .no-results.hidden { display: none; }
+    .no-results .ask-link {
+      display: block; margin: .7rem auto 0;
+      background: none; border: none; cursor: pointer;
+      color: var(--brand); font-size: .84rem; font-weight: 600;
+      text-decoration: underline; text-underline-offset: 3px;
+    }
+
+    /* 底部「加入推荐清单」入口卡 */
+    .join-card {
+      border: 1.5px dashed var(--line);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.2rem; text-align: center;
+      background: transparent;
+    }
+    .join-card h3 { font-size: .92rem; font-weight: 700; }
+    .join-card p  { font-size: .76rem; color: var(--muted); margin: .35rem 0 .85rem; }
+    .join-btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .5rem 1.05rem; border-radius: 999px;
+      border: 1px solid var(--brand); background: transparent;
+      color: var(--brand); font-size: .8rem; font-weight: 600;
+      cursor: pointer;
+    }
+    .join-btn:active { background: var(--brand); color: #fff; }
+
+    .cta-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: .5rem 1.1rem var(--safe-b);
+      background: rgba(240,244,243,.97);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--line);
+    }
+    .cta-bar button {
+      width: 100%; padding: .78rem; border-radius: 12px;
+      border: none; cursor: pointer; font-family: inherit;
+      font-size: .88rem; font-weight: 800; color: #fff;
+      background: var(--brand);
+      box-shadow: 0 8px 20px rgba(15,118,110,.22);
+    }
+
+    /* ══════════════════════════════════════════
+       桌面端：居中限宽 + 卡片栅格
+    ══════════════════════════════════════════ */
+    .page-main {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 720px) {
+      body {
+        font-size: 16px;
+        padding-bottom: calc(5rem + var(--safe-b));
+      }
+      .hero {
+        min-height: 260px;
+        border-radius: 0 0 28px 28px;
+      }
+      .hero-inner { min-height: 260px; padding: 1.35rem 1.5rem 1.75rem; }
+      .hero-top { top: 1.15rem; left: 1.5rem; right: 1.5rem; }
+      .hero h1 { font-size: 1.75rem; }
+      html[lang="en"] .hero h1 { font-size: 1.45rem; }
+      .hero-lead { font-size: .9rem; max-width: 36em; }
+      .page-main {
+        max-width: 680px;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
+      .controls { padding-left: 0; padding-right: 0; }
+      .cards { padding-left: 0; padding-right: 0; }
+      .card-img-wrap { width: 112px; }
+      .card-body { padding: .85rem 1rem .75rem; }
+      .card-name { font-size: 1rem; }
+      .card-desc { -webkit-line-clamp: 3; font-size: .82rem; }
+      .card-loc { font-size: .78rem; }
+      .cta-bar {
+        display: flex;
+        justify-content: center;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      .cta-bar button { max-width: 560px; }
+    }
+
+    @media (min-width: 1024px) {
+      .page-main {
+        max-width: 1080px;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      .hero {
+        min-height: 300px;
+        border-radius: 0 0 32px 32px;
+      }
+      .hero-inner { min-height: 300px; }
+      .hero h1 { font-size: 2rem; }
+      html[lang="en"] .hero h1 { font-size: 1.65rem; }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem 1.1rem;
+        padding-top: 1.1rem;
+        padding-bottom: .75rem;
+      }
+      .card-img-wrap { width: 132px; }
+      .card-body { padding: .95rem 1.05rem .85rem; }
+      .join-card { grid-column: 1 / -1; }
+    }
+
+    @media (min-width: 1320px) {
+      .page-main { max-width: 1200px; }
+    }
+
+    /* 地点行：图标 + 文案分列，避免长句在不合适位置断行 */
+    .card-loc {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      column-gap: .35rem;
+      margin-top: .04rem;
+      font-size: .72rem;
+    }
+    .card-loc-ico {
+      display: flex;
+      padding-top: .1em;
+      color: var(--brand);
+    }
+    .card-loc-txt { min-width: 0; }
+    .card-loc-body {
+      display: flex;
+      flex-direction: column;
+      gap: .22rem;
+      min-width: 0;
+      line-height: 1.45;
+    }
+    .card-loc-line1 {
+      font-weight: 500;
+      color: var(--brand);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .card-loc-line2 {
+      font-size: .94em;
+      font-weight: 500;
+      color: var(--sub);
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .card-loc-sep { font-weight: 500; color: var(--brand); opacity: .88; }
+  </style>
+</head>
+<body>
+
+  <main class="page-main">
+
+  <!-- ─── HERO（地图背景，非粘性，向上滚走后显示搜索栏） ── -->
+  <section class="hero">
+    <!-- 地图背景层：img + object-fit:cover，保持原图清晰度 -->
+    <div class="hero-map" aria-hidden="true">
+      <img src="map-bg.png" alt="">
+    </div>
+    <!-- 渐变遮罩层 -->
+    <div class="hero-veil" aria-hidden="true"></div>
+    <!-- 内容层 -->
+    <div class="hero-inner">
+      <div class="hero-top">
+        <button type="button" class="loc-btn" id="loc-btn" aria-label="选择位置">
+          <span class="loc-pin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+          </span>
+          <span class="loc-label" id="loc-label">选择位置</span>
+          <span class="loc-chevron">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="lang-sw" id="lang-sw" role="group"></div>
+      </div>
+      <h1 id="i-h1"></h1>
+      <div class="hero-rule"></div>
+      <p class="hero-lead" id="i-lead"></p>
+      <p class="hero-dist-note" id="i-dnote"></p>
+    </div>
+  </section>
+
+  <!-- Google Places Service 挂载点（不可见） -->
+  <div id="places-service-el" style="display:none"></div>
+
+  <!-- ─── 地址选择抽屉 ─────────────────────────────────── -->
+  <div class="loc-drawer-mask hidden" id="loc-drawer-mask">
+    <div class="loc-drawer">
+      <div class="loc-drawer-head">
+        <h3 id="loc-drawer-title">选择位置</h3>
+        <button class="loc-drawer-close" id="loc-drawer-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="loc-drawer-body">
+        <button class="loc-current-btn" id="loc-current-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+          <span id="loc-current-label">使用当前位置</span>
+        </button>
+        <div class="loc-search-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="color:var(--muted);flex-shrink:0">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="search" id="loc-search-in" autocomplete="off" spellcheck="false" placeholder="搜索地址…">
+          <button class="clear-btn" id="loc-clear-btn" hidden type="button" aria-label="清除">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="loc-suggestions" id="loc-suggestions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STICKY：搜索 + 分类胶囊 ──────────────────────── -->
+  <div class="controls">
+    <div class="search-row">
+      <div class="search-box">
+        <span class="s-ico">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </span>
+        <input type="search" id="search-in" autocomplete="off" spellcheck="false">
+        <button class="clear-btn" id="clear-btn" hidden aria-label="清除">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="chips" id="chips" role="tablist"></div>
+    <p class="explore-hint" id="explore-hint"></p>
+    <div class="sort-row" id="sort-row"></div>
+  </div>
+
+  <!-- ─── 门店卡片 ─────────────────────────────────────── -->
+  <div class="cards" id="cards"></div>
+  <p class="no-results hidden" id="no-res"></p>
+
+  </main>
+
+  <!-- ─── 预约弹层（WhatsApp / LINE / 微信） ──────────────── -->
+  <div class="wa-overlay" id="wa-overlay">
+    <div class="wa-sheet">
+      <div class="wa-sheet-head">
+        <p class="wa-store-name" id="wa-store-name"></p>
+        <button class="wa-close" id="wa-close" type="button">✕</button>
+      </div>
+
+      <!-- 渠道选择 -->
+      <div class="plat-row" id="plat-row">
+        <button class="plat-btn on" data-plat="whatsapp" type="button">
+          WhatsApp<span class="plat-badge" id="pb-rec">★ 推荐</span>
+        </button>
+        <button class="plat-btn" data-plat="line" type="button">LINE</button>
+        <button class="plat-btn" data-plat="wechat" type="button" id="pb-wechat">微信</button>
+      </div>
+
+      <!-- 表单（共享） -->
+      <div class="wa-fields">
+        <div class="wa-field" style="grid-column:1/-1">
+          <label id="wa-l-name">姓名</label>
+          <input type="text" id="wa-name" autocomplete="name">
+        </div>
+        <div class="wa-field">
+          <label id="wa-l-date">日期</label>
+          <input type="date" id="wa-date">
+        </div>
+        <div class="wa-field">
+          <label id="wa-l-time">时间</label>
+          <input type="time" id="wa-time">
+        </div>
+        <div class="wa-field">
+          <label id="wa-l-pax">人数</label>
+          <input type="number" id="wa-pax" min="1" max="30" value="2">
+        </div>
+      </div>
+
+      <!-- WhatsApp 操作区 -->
+      <div class="plat-act on" id="act-whatsapp">
+        <button class="wa-submit" id="wa-submit-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.559 4.122 1.531 5.855L0 24l6.335-1.51A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.658-.513-5.174-1.406l-.371-.22-3.762.897.944-3.66-.242-.378A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          <span id="wa-btn-text">通过 WhatsApp 预约</span>
+        </button>
+      </div>
+
+      <!-- LINE 操作区 -->
+      <div class="plat-act" id="act-line">
+        <p class="act-hint" id="line-hint">复制以下信息，前往添加 LINE 好友后发送</p>
+        <textarea class="msg-box" id="msg-line" readonly></textarea>
+        <div class="act-btns">
+          <button class="copy-btn" id="copy-line" type="button">复制信息</button>
+          <button class="link-btn line-btn" id="line-qr-toggle" type="button">显示二维码</button>
+        </div>
+        <div class="qr-wrap" id="line-qr-wrap">
+          <img src="../images/line-qr.jpg" alt="LINE 二维码">
+          <p id="line-qr-tip">扫码添加 LINE 好友</p>
+        </div>
+      </div>
+
+      <!-- 微信操作区 -->
+      <div class="plat-act" id="act-wechat">
+        <p class="act-hint" id="wechat-hint">复制以下信息，扫码添加微信好友后发送</p>
+        <textarea class="msg-box" id="msg-wechat" readonly></textarea>
+        <div class="act-btns">
+          <button class="copy-btn" id="copy-wechat" type="button">复制信息</button>
+          <button class="link-btn wechat-btn" id="wechat-qr-toggle" type="button">显示二维码</button>
+        </div>
+        <div class="qr-wrap" id="qr-wrap">
+          <img src="../images/wechat-qr.jpg" alt="微信二维码">
+          <p id="wechat-qr-tip">长按二维码添加微信</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 探索奖励优惠券（右下角） ─────────────────────── -->
+  <button class="coupon-entry" id="coupon-entry" type="button" hidden></button>
+  <div class="coupon-toast" id="coupon-toast" role="dialog" aria-live="polite" aria-hidden="true">
+    <button class="coupon-close" id="coupon-close" type="button" aria-label="关闭">✕</button>
+    <p class="coupon-eyebrow" id="coupon-eyebrow"></p>
+    <p class="coupon-title" id="coupon-title"></p>
+    <p class="coupon-desc" id="coupon-desc"></p>
+    <div class="coupon-code" id="coupon-code-el"></div>
+    <div class="coupon-fields">
+      <div class="coupon-field full">
+        <label id="coupon-l-name" for="coupon-name">姓名</label>
+        <input type="text" id="coupon-name" autocomplete="name" required>
+      </div>
+      <div class="coupon-field">
+        <label id="coupon-l-date" for="coupon-date">日期</label>
+        <input type="date" id="coupon-date">
+      </div>
+      <div class="coupon-field">
+        <label id="coupon-l-pax" for="coupon-pax">人数</label>
+        <input type="number" id="coupon-pax" min="1" max="30" value="2">
+      </div>
+    </div>
+    <div class="coupon-preview" id="coupon-preview">
+      <div class="coupon-preview-head">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.884-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        <span id="coupon-preview-title">WhatsApp 消息预览</span>
+      </div>
+      <pre class="coupon-preview-body" id="coupon-preview-body"></pre>
+      <p class="coupon-preview-hint" id="coupon-preview-hint">请先填写上方信息，即可预览发送内容。</p>
+    </div>
+    <div class="coupon-actions">
+      <button class="coupon-submit" id="coupon-submit" type="button" disabled>
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.884-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        <span id="coupon-submit-text">通过 WhatsApp 领取</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── 底部全局预约按钮 ─────────────────────────────── -->
+  <div class="cta-bar">
+    <button type="button" id="btn-cta"></button>
+  </div>
+
+<script>
+(function () {
+  /* ── 配置 ──────────────────────────────────────────── */
+  const LANGS      = ['zh','en','ja'];
+  const LANG_LBL   = { zh:'中文', en:'EN', ja:'日本語' };
+  const CAT_IDS    = ['all','spa','dining','transfer','whisky','kimono'];
+  /* 仅餐厅 / 酒吧 / 体验 闪烁并可计入探索 */
+  const EXPLORE_CATS = ['dining','whisky','kimono'];
+  const EXPLORE_NEED = 3;
+  const EXPLORE_COUPON = 'KYOTO3CAT';
+  const EXPLORE_LS_KEY = 'bnbHubExploreRewardHigaTest';
+  const EXPLORE_DONE_CAT = 'transfer'; /* 点满后自动跳到接送机 */
+  /* 本页固定客人来源：民宿御屋（Onya）——预约文案与距离说明共用 */
+  const GUEST_HOTEL = {
+    zh: '民宿御屋（Onya）',
+    en: 'Onya Guesthouse',
+    ja: '民宿御屋（Onya）',
+  };
+  // 从 stores.js 的 window.PROPERTIES 动态派生，fallback 兼容旧版
+  const _PROPS_SRC  = window.PROPERTIES || [
+    { id:'higashiyama', zh:'東山民宿', en:'Higashiyama Guesthouse', ja:'東山民宿', lat:35.01021, lon:135.77801 },
+    { id:'gion',        zh:'祇園別邸', en:'Gion Bettei',             ja:'祇園別邸', lat:35.003,   lon:135.774   },
+    { id:'arashiyama',  zh:'嵐山山居', en:'Arashiyama Sankyo',       ja:'嵐山山居', lat:35.016,   lon:135.673   },
+  ];
+  const STAYS = _PROPS_SRC.map(p => p.id);
+
+  /* ── 状态 ──────────────────────────────────────────── */
+  let lang      = detectLang();
+  let activeCat = 'all';
+  let q         = '';
+  const stayId  = detectStay();
+  // 排序：default = 手动推荐顺序 / stay = 离所选位置最近 / me = 离用户最近
+  let sortMode  = 'default';
+  let userPos   = null;   // {lat, lon}，定位成功后缓存
+  let geoState  = 'idle'; // idle | loading | ok | error
+
+  /* location picker state */
+  let custLoc    = null;   // {lat, lon, displayName} — user-selected location from picker
+  let locSuggestions = []; // current search results
+  let locSearchTimer = null;
+
+  function detectLang() {
+    const p = (new URLSearchParams(location.search).get('lang')||'').toLowerCase();
+    if (LANGS.includes(p)) return p;
+    try { const s = localStorage.getItem('bnbHubLang'); if (LANGS.includes(s)) return s; } catch(_){}
+    const n = (navigator.language||'').toLowerCase();
+    return n.startsWith('zh') ? 'zh' : n.startsWith('ja') ? 'ja' : 'en';
+  }
+  function detectStay() {
+    const s = (new URLSearchParams(location.search).get('stay')||'').toLowerCase();
+    // 无 ?stay= 参数时默认东山（民宿实际位置）
+    return STAYS.includes(s) ? s : 'higashiyama';
+  }
+
+  /* ── 位置选择器：计算当前参考点 ────────────────────── */
+  function refPoint() {
+    if (custLoc) return { lat: custLoc.lat, lon: custLoc.lon };
+    const p = _PROPS_SRC.find(x => x.id === stayId);
+    return p ? { lat: p.lat, lon: p.lon } : null;
+  }
+
+  /* ── 位置选择器：参考点显示名称 ────────────────────── */
+  function refDisplayName() {
+    if (custLoc) return custLoc.displayName;
+    return pName() || '';
+  }
+
+  /* ── 更新位置按钮标签 ──────────────────────────────── */
+  function updateLocLabel() {
+    const u = L();
+    if (custLoc) {
+      $locLabel.textContent = custLoc.displayName;
+      $locBtn.classList.add('dirty');
+    } else {
+      $locLabel.textContent = pName() || u.locStayDefault;
+      $locBtn.classList.remove('dirty');
+    }
+  }
+
+  /* ── 多语言文案 ────────────────────────────────────── */
+  const PROPS = Object.fromEntries(_PROPS_SRC.map(p => [p.id, { zh: p.zh, en: p.en, ja: p.ja }]));
+
+  const UI = {
+    zh: {
+      title:    '精选合作体验',
+      h1:       '京都体验精选',
+      lead:     '按摩疗愈、京都料理、机场接送、威士忌品鉴与和服体验，均由我们严选合作，可代为预约。',
+      dnote:    p => p ? `以下距离以 <strong>${p}</strong> 为出发点估算` : '扫描房间内二维码后可自动显示至各店距离',
+      searchPh: '搜索按摩、餐厅、接送机…',
+      cats:     { all:'全部', spa:'SPA', dining:'餐厅', transfer:'接送机', whisky:'酒吧', kimono:'体验' },
+      sortLbl:  '排序',
+      sortDefault: '推荐',
+      sortStay: '离所选位置最近',
+      sortMe:   '离我最近',
+      locating: '定位中…',
+      geoFail:  '无法获取您的位置，请检查定位权限后重试',
+      geoUnsupported: '当前浏览器不支持定位',
+      distYou:  km => `距您 ${km}`,
+      rec:      '★ 优惠',
+      book:     '帮我预约',
+      cta:      '联系我们安排',
+      empty:    '未找到相关服务，换个关键词试试',
+      emptyAsk: '没找到想要的？告诉我们 →',
+      askMsg:   kw => kw
+        ? `您好，我在体验页面搜索「${kw}」没有找到想要的服务，可以帮忙安排吗？`
+        : '您好，我想咨询页面上没有列出的服务，可以帮忙安排吗？',
+      locSelect: '选择位置',
+      locUseCurrent: '使用当前位置',
+      locCurrentSpot: '当前位置',
+      locNearbyTitle: '附近位置',
+      locSearchPh: '搜索地址…',
+      locDrawerTitle: '选择位置',
+      locEmpty: '未找到地址，换个关键词试试',
+      locStayDefault: '默认民宿位置',
+      joinT:    '想让你的店出现在这里？',
+      joinD:    '我们持续招募优质合作伙伴，欢迎联系洽谈',
+      joinBtn:  '联系我们加入',
+      joinMsg:  '您好，我想申请加入合作推荐清单。\n店铺名称：\n类型（餐厅/SPA/体验等）：\n联系人：',
+      lAria:    '界面语言',
+      aBook:    '占位：预约入口 (LINE / 表单)。',
+      aCta:     '占位：全局联系 / 预约。',
+      couponEyebrow: '探索奖励',
+      couponTitle: '恭喜！获得专属优惠券',
+      couponDesc: '填写信息后预览消息，再跳转 WhatsApp 领取。',
+      couponClose: '关闭',
+      couponEntry: '我的优惠券',
+      couponLName: '姓名 *',
+      couponLDate: '日期',
+      couponLPax: '人数',
+      couponPreviewTitle: 'WhatsApp 消息预览',
+      couponPreviewHint: '请先填写姓名，即可预览发送内容。',
+      couponSubmit: '通过 WhatsApp 领取',
+      couponRedirecting: '跳转中…',
+      exploreHint: '点亮 <strong>餐厅、酒吧、体验</strong> 共 3 类，即可领取专属优惠券',
+      couponMsg: (code, hotel, client, name, date, pax) =>
+        `您好，我想领取探索奖励优惠券。\n优惠券码：${code}\n客户：${hotel}\n客户代码：${client}\n姓名：${name}\n日期：${date}\n人数：${pax}\n请帮我兑换，谢谢！`,
+    },
+    en: {
+      title:    'Partner Experiences',
+      h1:       'Curated Experiences',
+      lead:     'Massage, Kyoto dining, airport transfers, whisky tastings, and kimono—all handpicked and bookable through us.',
+      dnote:    p => p ? `Distances estimated from <strong>${p}</strong>` : 'Scan the in-room QR code to see distances from your guesthouse',
+      searchPh: 'Search massage, dining, transfer…',
+      cats:     { all:'All', spa:'SPA', dining:'Dining', transfer:'Transfer', whisky:'Bar', kimono:'Experience' },
+      sortLbl:  'Sort',
+      sortDefault: 'Featured',
+      sortStay: 'Near selected location',
+      sortMe:   'Near me',
+      locating: 'Locating…',
+      geoFail:  'Could not get your location. Please check location permission and try again.',
+      geoUnsupported: 'Geolocation is not supported by this browser',
+      distYou:  km => `${km} from you`,
+      rec:      '★ Deal',
+      book:     'Book for me',
+      cta:      'Contact us to book',
+      empty:    'No results. Try different keywords.',
+      emptyAsk: "Can't find what you need? Tell us →",
+      askMsg:   kw => kw
+        ? `Hello, I searched for "${kw}" on the experiences page but couldn't find it. Could you help arrange this?`
+        : 'Hello, I would like to ask about a service not listed on the page. Could you help?',
+      locSelect: 'Select location',
+      locUseCurrent: 'Use current location',
+      locCurrentSpot: 'Current location',
+      locNearbyTitle: 'Nearby places',
+      locSearchPh: 'Search address…',
+      locDrawerTitle: 'Select location',
+      locEmpty: 'No addresses found. Try different keywords.',
+      locStayDefault: 'Guesthouse location',
+      joinT:    'Want your business listed here?',
+      joinD:    'We are always looking for great partners—get in touch',
+      joinBtn:  'Contact us to join',
+      joinMsg:  'Hello, I would like to apply to join your partner list.\nBusiness name: \nCategory (dining / spa / experience etc.): \nContact person: ',
+      lAria:    'Language',
+      aBook:    'Placeholder: booking flow (LINE / form).',
+      aCta:     'Placeholder: concierge / booking.',
+      couponEyebrow: 'Explore reward',
+      couponTitle: 'You unlocked a coupon!',
+      couponDesc: 'Fill in your details, preview the message, then open WhatsApp to redeem.',
+      couponClose: 'Close',
+      couponEntry: 'My coupon',
+      couponLName: 'Name *',
+      couponLDate: 'Date',
+      couponLPax: 'Guests',
+      couponPreviewTitle: 'WhatsApp Message Preview',
+      couponPreviewHint: 'Enter your name to preview the message.',
+      couponSubmit: 'Redeem via WhatsApp',
+      couponRedirecting: 'Redirecting…',
+      exploreHint: 'Tap <strong>Dining, Bar & Experience</strong> (3 categories) to unlock a coupon',
+      couponMsg: (code, hotel, client, name, date, pax) =>
+        `Hello, I'd like to redeem my explore-reward coupon.\nCoupon: ${code}\nGuest: ${hotel}\nClient ID: ${client}\nName: ${name}\nDate: ${date}\nGuests: ${pax}\nPlease help me redeem it. Thank you!`,
+    },
+    ja: {
+      title:    '提携体験のご案内',
+      h1:       '京都の厳選提携体験',
+      lead:     'マッサージ、京料理、空港送迎、ウイスキー体験、着物レンタル。すべて厳選の提携先で、当社が手配します。',
+      dnote:    p => p ? `<strong>${p}</strong> を出発点とした目安距離` : 'お部屋のQRコードをスキャンすると各店までの距離が表示されます',
+      searchPh: 'マッサージ、食事、送迎を検索…',
+      cats:     { all:'すべて', spa:'SPA', dining:'レストラン', transfer:'送迎', whisky:'バー', kimono:'体験' },
+      sortLbl:  '並び替え',
+      sortDefault: 'おすすめ',
+      sortStay: '選択位置から近い順',
+      sortMe:   '現在地から近い順',
+      locating: '位置情報を取得中…',
+      geoFail:  '位置情報を取得できませんでした。位置情報の許可をご確認ください。',
+      geoUnsupported: 'このブラウザは位置情報に対応していません',
+      distYou:  km => `現在地から ${km}`,
+      rec:      '★ 割引',
+      book:     '予約する',
+      cta:      'ご予約のご依頼',
+      empty:    '該当なし。別のキーワードをお試しください。',
+      emptyAsk: 'お探しのものが見つかりませんか？ご要望はこちら →',
+      askMsg:   kw => kw
+        ? `こんにちは。体験ページで「${kw}」を検索しましたが見つかりませんでした。手配していただけますか？`
+        : 'こんにちは。ページに掲載されていないサービスについて相談したいです。',
+      locSelect: '位置を選択',
+      locUseCurrent: '現在地を使用',
+      locCurrentSpot: '現在地',
+      locNearbyTitle: '付近の場所',
+      locSearchPh: '住所を検索…',
+      locDrawerTitle: '位置を選択',
+      locEmpty: '住所が見つかりません。検索キーワードを変えてください。',
+      locStayDefault: '宿泊施設の位置',
+      joinT:    'あなたのお店をここに掲載しませんか？',
+      joinD:    '優良なパートナーを随時募集しています。お気軽にご相談ください',
+      joinBtn:  '掲載のご相談',
+      joinMsg:  'こんにちは。パートナー掲載に応募したいです。\n店舗名：\n業種（飲食／スパ／体験など）：\nご担当者：',
+      lAria:    '表示言語',
+      aBook:    'プレースホルダー：予約。',
+      aCta:     'プレースホルダー：窓口。',
+      couponEyebrow: '探索ボーナス',
+      couponTitle: 'クーポンを獲得しました！',
+      couponDesc: '情報を入力してプレビューを確認後、WhatsApp で受け取ります。',
+      couponClose: '閉じる',
+      couponEntry: 'マイクーポン',
+      couponLName: 'お名前 *',
+      couponLDate: '日付',
+      couponLPax: '人数',
+      couponPreviewTitle: 'WhatsApp メッセージプレビュー',
+      couponPreviewHint: 'お名前を入力すると送信内容をプレビューできます。',
+      couponSubmit: 'WhatsApp で受け取る',
+      couponRedirecting: '移動中…',
+      exploreHint: '<strong>レストラン・バー・体験</strong>の3カテゴリを開くとクーポンを獲得できます',
+      couponMsg: (code, hotel, client, name, date, pax) =>
+        `こんにちは。探索ボーナスのクーポンを受け取りたいです。\nクーポンコード：${code}\nお客様：${hotel}\n顧客コード：${client}\nお名前：${name}\n日付：${date}\n人数：${pax}\nクーポンの交換をお願いします。`,
+    },
+  };
+
+  /* ── 门店数据：从 stores.js 加载 ────────────────────── */
+  const STORES = window.STORES || [];
+
+  /* ── helpers ────────────────────────────────────────── */
+  function L()    { return UI[lang]; }
+  function pName(){ return GUEST_HOTEL[lang] || GUEST_HOTEL.zh; }
+  function travel(store) {
+    if (!stayId) return null;
+    return (store.fromStay[stayId]||{})[lang] || null;
+  }
+  /* Haversine 直线距离 ×1.25 估算实际路程（km，数值） */
+  function havKm(a, b) {
+    if (!a || !b) return null;
+    const R = 6371, rad = d => d * Math.PI / 180;
+    const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+    const h = Math.sin(dLat/2)**2 +
+              Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(h)) * 1.25;
+  }
+  /* 参考点 → 门店距离（数值 km，排序用） */
+  function stayKmVal(store) {
+    return havKm(refPoint(), store.storeCoords);
+  }
+  /* 用户 → 门店距离（数值 km，排序用） */
+  function userKmVal(store) {
+    return havKm(userPos, store.storeCoords);
+  }
+  /* 参考点 → 门店距离文本 */
+  function distKm(store) {
+    const km = stayKmVal(store);
+    return km == null ? null : km.toFixed(1) + ' km';
+  }
+
+  /* ── DOM refs ────────────────────────────────────────── */
+  /* location picker refs */
+  const $locBtn      = document.getElementById('loc-btn');
+  const $locLabel    = document.getElementById('loc-label');
+  const $locMask     = document.getElementById('loc-drawer-mask');
+  const $locClose    = document.getElementById('loc-drawer-close');
+  const $locTitle    = document.getElementById('loc-drawer-title');
+  const $locCurBtn   = document.getElementById('loc-current-btn');
+  const $locCurLabel = document.getElementById('loc-current-label');
+  const $locSearchIn = document.getElementById('loc-search-in');
+  const $locClearBtn = document.getElementById('loc-clear-btn');
+  const $locSugs     = document.getElementById('loc-suggestions');
+  const $placesEl    = document.getElementById('places-service-el');
+
+  const $h1      = document.getElementById('i-h1');
+  const $lead    = document.getElementById('i-lead');
+  const $dnote   = document.getElementById('i-dnote');
+  const $langSw  = document.getElementById('lang-sw');
+  const $searchIn= document.getElementById('search-in');
+  const $clearBtn= document.getElementById('clear-btn');
+  const $chips   = document.getElementById('chips');
+  const $sortRow = document.getElementById('sort-row');
+  const $cards   = document.getElementById('cards');
+  const $noRes   = document.getElementById('no-res');
+  const $btnCta  = document.getElementById('btn-cta');
+
+  /* ── 渲染页面框架文字 ────────────────────────────────── */
+  function renderChrome() {
+    const u = L();
+    document.title         = u.title;
+    updateLocLabel();
+    $h1.innerHTML          = u.h1.replace('\n','<br>');
+    $lead.textContent      = u.lead;
+    $btnCta.textContent    = u.cta;
+    $noRes.innerHTML       = `${u.empty}<button type="button" class="ask-link">${u.emptyAsk}</button>`;
+    $searchIn.placeholder  = u.searchPh;
+    $langSw.setAttribute('aria-label', u.lAria);
+    $dnote.innerHTML = u.dnote(refDisplayName());
+  }
+
+  /* ── 语言按钮 ────────────────────────────────────────── */
+  function renderLang() {
+    $langSw.innerHTML = '';
+    LANGS.forEach(code => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = LANG_LBL[code];
+      b.className = code === lang ? 'on' : '';
+      b.setAttribute('aria-pressed', String(code === lang));
+      b.addEventListener('click', () => setLang(code));
+      $langSw.appendChild(b);
+    });
+  }
+
+  /* ── 分类胶囊 ────────────────────────────────────────── */
+  /* URL：?explore=reset 清空进度；?explore=show 已领券时直接打开弹层 */
+  function applyExploreUrlFlags() {
+    const u = new URL(location.href);
+    const flag = (u.searchParams.get('explore') || '').toLowerCase();
+    if (!flag) return '';
+    if (flag === 'reset') {
+      try { localStorage.removeItem(EXPLORE_LS_KEY); } catch (_) {}
+    }
+    u.searchParams.delete('explore');
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+    return flag;
+  }
+  const exploreUrlFlag = applyExploreUrlFlags();
+
+  function loadExploreState() {
+    try {
+      const raw = localStorage.getItem(EXPLORE_LS_KEY);
+      if (!raw) return { clicked: [], unlocked: false };
+      const data = JSON.parse(raw);
+      const clicked = Array.isArray(data.clicked)
+        ? data.clicked.filter(id => EXPLORE_CATS.includes(id))
+        : [];
+      return { clicked, unlocked: !!data.unlocked };
+    } catch (_) {
+      return { clicked: [], unlocked: false };
+    }
+  }
+  function saveExploreState() {
+    try {
+      localStorage.setItem(EXPLORE_LS_KEY, JSON.stringify({
+        clicked: [...exploreClicked],
+        unlocked: exploreUnlocked,
+      }));
+    } catch (_) {}
+  }
+  let exploreState = loadExploreState();
+  const exploreClicked = new Set(exploreState.clicked);
+  let exploreUnlocked = exploreState.unlocked;
+
+  function renderChips() {
+    $chips.innerHTML = '';
+    CAT_IDS.forEach(id => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role','tab');
+      const hint = !exploreUnlocked && EXPLORE_CATS.includes(id) && !exploreClicked.has(id);
+      b.className = 'chip'
+        + (id === activeCat ? ' on' : '')
+        + (hint ? ' hint' : '');
+      b.textContent = L().cats[id]; b.dataset.cat = id;
+      $chips.appendChild(b);
+    });
+    syncExploreHint();
+  }
+
+  /* ── 探索奖励优惠券 ──────────────────────────────────── */
+  const $exploreHint = document.getElementById('explore-hint');
+  const $couponToast = document.getElementById('coupon-toast');
+  const $couponClose = document.getElementById('coupon-close');
+  const $couponEntry = document.getElementById('coupon-entry');
+  const $couponName  = document.getElementById('coupon-name');
+  const $couponDate  = document.getElementById('coupon-date');
+  const $couponPax   = document.getElementById('coupon-pax');
+  const $couponPrev  = document.getElementById('coupon-preview');
+  const $couponPrevBody = document.getElementById('coupon-preview-body');
+  const $couponSubmit = document.getElementById('coupon-submit');
+  const $couponSubmitText = document.getElementById('coupon-submit-text');
+
+  function guestClientId() { return window.__CS_CLIENT || 'onya'; }
+
+  function syncExploreHint() {
+    const u = L();
+    $exploreHint.innerHTML = u.exploreHint;
+    $exploreHint.classList.toggle('show', !exploreUnlocked);
+  }
+
+  function couponFormComplete() {
+    return !!($couponName.value || '').trim();
+  }
+
+  function buildCouponMsg() {
+    const u = L();
+    const name = ($couponName.value || '').trim() || '—';
+    const date = $couponDate.value || '—';
+    const pax  = $couponPax.value || '—';
+    return u.couponMsg(EXPLORE_COUPON, pName(), guestClientId(), name, date, pax);
+  }
+
+  function updateCouponPreview() {
+    const u = L();
+    const ready = couponFormComplete();
+    $couponPrev.classList.toggle('ready', ready);
+    $couponPrevBody.textContent = ready ? buildCouponMsg() : '';
+    $couponSubmit.disabled = !ready;
+    $couponName.classList.toggle('err', false);
+    if ($couponSubmitText.dataset.redirecting !== '1') {
+      $couponSubmitText.textContent = u.couponSubmit;
+    }
+  }
+
+  function syncCouponEntry() {
+    const u = L();
+    $couponEntry.textContent = u.couponEntry;
+    const show = exploreUnlocked && !$couponToast.classList.contains('open');
+    $couponEntry.classList.toggle('show', show);
+    $couponEntry.hidden = !show;
+  }
+
+  function renderCouponToast() {
+    const u = L();
+    document.getElementById('coupon-eyebrow').textContent = u.couponEyebrow;
+    document.getElementById('coupon-title').textContent = u.couponTitle;
+    document.getElementById('coupon-desc').textContent = u.couponDesc;
+    document.getElementById('coupon-code-el').textContent = EXPLORE_COUPON;
+    document.getElementById('coupon-l-name').textContent = u.couponLName;
+    document.getElementById('coupon-l-date').textContent = u.couponLDate;
+    document.getElementById('coupon-l-pax').textContent = u.couponLPax;
+    document.getElementById('coupon-preview-title').textContent = u.couponPreviewTitle;
+    document.getElementById('coupon-preview-hint').textContent = u.couponPreviewHint;
+    $couponClose.setAttribute('aria-label', u.couponClose);
+    $couponSubmitText.dataset.redirecting = '';
+    $couponSubmitText.textContent = u.couponSubmit;
+    $couponSubmit.disabled = !couponFormComplete();
+    if (!$couponDate.value) {
+      const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+      $couponDate.value = tmr.toISOString().slice(0, 10);
+    }
+    if (!$couponPax.value) $couponPax.value = '2';
+    updateCouponPreview();
+  }
+
+  function showCouponToast() {
+    renderCouponToast();
+    $couponToast.classList.add('open');
+    $couponToast.setAttribute('aria-hidden', 'false');
+    syncCouponEntry();
+    syncExploreHint();
+  }
+
+  function hideCouponToast() {
+    $couponToast.classList.remove('open');
+    $couponToast.setAttribute('aria-hidden', 'true');
+    syncCouponEntry();
+  }
+
+  function unlockExploreReward(catId) {
+    if (exploreUnlocked) return;
+    if (!EXPLORE_CATS.includes(catId)) return;
+    exploreClicked.add(catId);
+    saveExploreState();
+    syncExploreHint();
+    if (exploreClicked.size < EXPLORE_NEED) return;
+    exploreUnlocked = true;
+    saveExploreState();
+    activeCat = EXPLORE_DONE_CAT; /* 自动跳到接送机 */
+    if (typeof __csTrack === 'function') {
+      __csTrack({
+        action: 'click',
+        btn: 'explore-reward',
+        label: [...exploreClicked].join(','),
+      });
+    }
+    showCouponToast();
+  }
+
+  $couponClose.addEventListener('click', hideCouponToast);
+  $couponEntry.addEventListener('click', () => {
+    if (typeof __csTrack === 'function') {
+      __csTrack({ action: 'click', btn: 'coupon-entry', label: EXPLORE_COUPON });
+    }
+    showCouponToast();
+  });
+  ['input', 'change'].forEach(ev => {
+    $couponName.addEventListener(ev, updateCouponPreview);
+    $couponDate.addEventListener(ev, updateCouponPreview);
+    $couponPax.addEventListener(ev, updateCouponPreview);
+  });
+  $couponSubmit.addEventListener('click', () => {
+    if (!couponFormComplete()) {
+      $couponName.classList.add('err');
+      $couponName.focus();
+      return;
+    }
+    const u = L();
+    const msg = buildCouponMsg();
+    /* 与门店预约一致：wa.me 预填文案跳转 */
+    const url = `https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`;
+    if (typeof __csTrack === 'function') {
+      __csTrack({ action: 'click', btn: 'coupon-wa', label: EXPLORE_COUPON });
+    }
+    $couponSubmit.disabled = true;
+    $couponSubmitText.dataset.redirecting = '1';
+    $couponSubmitText.textContent = u.couponRedirecting;
+    setTimeout(() => {
+      window.open(url, '_blank');
+      $couponSubmitText.dataset.redirecting = '';
+      $couponSubmitText.textContent = u.couponSubmit;
+      $couponSubmit.disabled = !couponFormComplete();
+    }, 400);
+  });
+
+  /* ── 排序按钮 ────────────────────────────────────────── */
+  function renderSort() {
+    const u = L();
+    $sortRow.innerHTML = '';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'sort-lbl';
+    lbl.innerHTML =
+      `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4"/></svg>` +
+      u.sortLbl;
+    $sortRow.appendChild(lbl);
+
+    const items = [
+      { mode:'default', txt: u.sortDefault },
+      { mode:'stay',    txt: u.sortStay },
+      { mode:'me',      txt: geoState === 'loading' ? u.locating : u.sortMe },
+    ];
+    items.forEach(it => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sort-btn' + (it.mode === sortMode ? ' on' : '');
+      b.dataset.sort = it.mode;
+      if (it.mode === 'me') {
+        b.disabled = geoState === 'loading';
+        b.innerHTML =
+          `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>` +
+          it.txt;
+      } else {
+        b.textContent = it.txt;
+      }
+      $sortRow.appendChild(b);
+    });
+  }
+
+  /* ── 用户定位 ────────────────────────────────────────── */
+  function requestUserSort() {
+    // 已有定位结果：直接切换排序
+    if (userPos) { sortMode = 'me'; renderSort(); renderCards(); return; }
+    if (!navigator.geolocation) {
+      geoState = 'error';
+      alert(L().geoUnsupported);
+      return;
+    }
+    geoState = 'loading';
+    renderSort();
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userPos  = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        geoState = 'ok';
+        sortMode = 'me';
+        renderSort(); renderCards();
+      },
+      () => {
+        geoState = 'error';
+        renderSort();
+        alert(L().geoFail);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  /* ── 门店卡片 ────────────────────────────────────────── */
+  function renderCards() {
+    $cards.innerHTML = '';
+    const u  = L();
+    const sq = q.trim().toLowerCase();
+
+    /* 模糊匹配：
+       1. 先尝试直接子串（最精确）
+       2. 字符级拆分仅对中文启用："送机" → 每个汉字逐一匹配
+          （英文/日文假名不拆，避免字母太短造成误命中） */
+    function fuzzy(hay, term) {
+      if (hay.includes(term)) return true;
+      if (term.length >= 2 && /[\u4e00-\u9fff]/.test(term))
+        return term.split('').every(ch => hay.includes(ch));
+      return false;
+    }
+
+    /** 地点文案转义（防 XSS） */
+    function escLocHtml(t) {
+      return String(t ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+    const list = STORES
+      .filter(s => {
+        if (s.hidden) return false;
+        if (activeCat !== 'all' && s.cat !== activeCat) return false;
+        if (sq) {
+          const c        = s[lang];
+          const catLabel = (L().cats[s.cat] || '').toLowerCase();
+          const hay      = [c.name, c.area, c.desc, ...(c.tags||[]), catLabel].join(' ').toLowerCase();
+          return fuzzy(hay, sq);
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // 距离排序：stay = 离民宿，me = 离用户；无坐标的门店排在最后
+        if (sortMode === 'stay' || (sortMode === 'me' && userPos)) {
+          const fn = sortMode === 'stay' ? stayKmVal : userKmVal;
+          const da = fn(a), db = fn(b);
+          if (da != null || db != null)
+            return (da ?? Infinity) - (db ?? Infinity);
+        }
+        // 默认：全部列表按 orderAll，分类列表按 orderCat，均为手动指定顺序
+        const key = activeCat === 'all' ? 'orderAll' : 'orderCat';
+        return (a[key] ?? 999) - (b[key] ?? 999);
+      });
+
+    if (!list.length) { $noRes.classList.remove('hidden'); return; }
+    $noRes.classList.add('hidden');
+
+    list.forEach(store => {
+      const c  = store[lang];
+      const tr = travel(store);
+      const km = distKm(store);
+      // 按用户位置排序时，额外显示「距您 X km」
+      let meTxt = null;
+      if (sortMode === 'me' && userPos) {
+        const mk = userKmVal(store);
+        if (mk != null) meTxt = u.distYou(mk.toFixed(1) + ' km');
+      }
+      const meta = [tr, km, meTxt].filter(Boolean).map(escLocHtml).join('<span class="card-loc-sep"> · </span>');
+      const line1Core = escLocHtml(c.area || '');
+      const line1 = meta
+        ? (line1Core ? line1Core + '<span class="card-loc-sep"> · </span>' + meta : meta)
+        : line1Core;
+      const locBodyHtml =
+        `<span class="card-loc-body"><span class="card-loc-line1">${line1 || escLocHtml(c.area)}</span></span>`;
+
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.dataset.cat = store.cat;
+      card.dataset.storeId = store.id || '';
+
+      const tagsHtml = (c.tags||[]).map(t => `<span class="tag">${t}</span>`).join('');
+      const recHtml  = store.rec ? `<span class="rec-badge">${u.rec}</span>` : '';
+
+      // 多格式图片：无后缀时自动尝试 webp → jpg → png；有后缀或 URL 则直接使用
+      function imgTag(src, alt) {
+        if (!src) return '';
+        const hasExt = /\.(jpe?g|png|webp|gif|avif)$/i.test(src);
+        const isUrl  = /^https?:\/\//.test(src);
+        if (hasExt || isUrl) {
+          return `<img class="card-img" src="${src}" alt="${alt}" loading="lazy" onerror="this.style.display='none'">`;
+        }
+        // 无后缀：级联尝试 webp → jpg → png → 隐藏（目标格式为 webp）
+        return `<img class="card-img" src="${src}.webp" alt="${alt}" loading="lazy" ` +
+          `onerror="this.src='${src}.jpg';this.onerror=function(){this.src='${src}.png';this.onerror=function(){this.style.display='none';}}">`;
+      }
+
+      card.innerHTML =
+        `<div class="card-img-wrap">` +
+          imgTag(store.img, c.name) +
+        `</div>` +
+        `<div class="card-body">` +
+          `<div class="card-row1">` +
+            `<h2 class="card-name">${c.name}</h2>${recHtml}` +
+          `</div>` +
+          `<p class="card-loc">` +
+            `<span class="card-loc-ico">` +
+            `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>` +
+            `</span>` +
+            `<span class="card-loc-txt">${locBodyHtml}</span>` +
+          `</p>` +
+          `<p class="card-desc">${c.desc}</p>` +
+          `<div class="card-tags">${tagsHtml}</div>` +
+          `<div class="card-footer">` +
+            `<span class="card-hours">` +
+              `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>` +
+              `&nbsp;${c.hours}` +
+            `</span>` +
+            `<button type="button" class="book-btn" data-book>` +
+              `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>` +
+              `${u.book}` +
+            `</button>` +
+          `</div>` +
+        `</div>`;
+
+      $cards.appendChild(card);
+    });
+
+    /* 底部「加入推荐清单」入口（固定在列表最后，不参与筛选） */
+    const join = document.createElement('div');
+    join.className = 'join-card';
+    join.innerHTML =
+      `<h3>${u.joinT}</h3><p>${u.joinD}</p>` +
+      `<button type="button" class="join-btn">` +
+        `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>` +
+        `${u.joinBtn}` +
+      `</button>`;
+    join.querySelector('.join-btn').addEventListener('click', () =>
+      window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(u.joinMsg)}`, '_blank'));
+    $cards.appendChild(join);
+  }
+
+  /* ── 切换语言 ────────────────────────────────────────── */
+  function setLang(next) {
+    if (!LANGS.includes(next)) return;
+    lang = next; q = ''; $searchIn.value = ''; $clearBtn.hidden = true;
+    try { localStorage.setItem('bnbHubLang', lang); } catch(_){}
+    const u = new URL(location.href);
+    u.searchParams.set('lang', lang);
+    history.replaceState(null, '', u.pathname + u.search);
+    document.documentElement.lang = lang==='zh' ? 'zh-CN' : lang==='ja' ? 'ja' : 'en';
+    renderChrome(); renderLang(); renderChips(); renderSort(); renderCards();
+    if ($couponToast.classList.contains('open')) renderCouponToast();
+    else { syncCouponEntry(); syncExploreHint(); }
+  }
+
+  /* ── 事件 ────────────────────────────────────────────── */
+  $chips.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const catId = b.dataset.cat || 'all';
+    activeCat = catId;
+    unlockExploreReward(catId);
+    if (typeof __csTrack === 'function' && EXPLORE_CATS.includes(catId)) {
+      __csTrack({ action: 'click', btn: 'cat-' + catId, label: catId });
+    }
+    renderChips(); renderCards();
+  });
+  $sortRow.addEventListener('click', e => {
+    const b = e.target.closest('.sort-btn'); if (!b) return;
+    const mode = b.dataset.sort;
+    if (mode === 'me') { requestUserSort(); return; }
+    if (mode === sortMode) return;
+    sortMode = mode;
+    renderSort(); renderCards();
+  });
+  $searchIn.addEventListener('input', e => {
+    q = e.target.value; $clearBtn.hidden = !q; renderCards();
+  });
+  $clearBtn.addEventListener('click', () => {
+    q = ''; $searchIn.value = ''; $clearBtn.hidden = true;
+    $searchIn.focus(); renderCards();
+  });
+  /* 空结果「告诉我们」→ WhatsApp 带上搜索词 */
+  $noRes.addEventListener('click', e => {
+    if (!e.target.closest('.ask-link')) return;
+    window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(L().askMsg(q.trim()))}`, '_blank');
+  });
+
+  /* ══════════════════════════════════════════════════════
+     位置选择器逻辑
+  ══════════════════════════════════════════════════════ */
+
+  /* ── Google API Key ─────────────────────────────────── */
+  let gApiKey = 'AIzaSyDEIgay-nlNdHfALnm38regWtohrZE-Bd8';
+  try { gApiKey = localStorage.getItem('bnbAdminGApiKey') || gApiKey; } catch(_) {}
+
+  /* ── 加载 Google Maps JS API ───────────────────────── */
+  let gmapsLoaded = false;
+  let gmapsLoading = null;
+  function loadGmaps() {
+    if (gmapsLoaded && window.google?.maps) return Promise.resolve();
+    if (gmapsLoading) return gmapsLoading;
+    if (!gApiKey) return Promise.reject(new Error('No API key'));
+    gmapsLoading = new Promise((resolve, reject) => {
+      const old = document.getElementById('gmaps-script');
+      if (old) old.remove();
+      gmapsLoaded = false;
+      const s = document.createElement('script');
+      s.id = 'gmaps-script';
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${gApiKey}&libraries=places`;
+      s.async = true;
+      s.onload = () => { gmapsLoaded = true; gmapsLoading = null; console.log('[GMaps] script loaded, maps:', !!window.google?.maps, 'places:', !!window.google?.maps?.places); resolve(); };
+      s.onerror = (e) => { gmapsLoading = null; gmapsLoaded = false; console.error('[GMaps] script load error:', e); reject(new Error('Google Maps load failed')); };
+      document.head.appendChild(s);
+    });
+    return gmapsLoading;
+  }
+
+  /* ── 适配 Google Places 结果为旧格式 ───────────────── */
+  function gPlaceResult(p) {
+    return {
+      lat: p.geometry.location.lat(),
+      lon: p.geometry.location.lng(),
+      display_name: p.name + ', ' + (p.formatted_address || p.vicinity || '')
+    };
+  }
+
+  function gGeocodeResult(r) {
+    const byType = {};
+    (r.address_components || []).forEach(c => c.types.forEach(t => byType[t] = c.long_name));
+    return {
+      display_name: r.formatted_address,
+      address: {
+        road: byType.route,
+        neighbourhood: byType.neighborhood || byType.sublocality_level_2,
+        suburb: byType.sublocality || byType.locality,
+        city_district: byType.administrative_area_level_2,
+        city: byType.locality || byType.administrative_area_level_1,
+        county: byType.administrative_area_level_2,
+        country: byType.country
+      }
+    };
+  }
+
+  /* ── 地址搜索：Autocomplete 建议 → 点击时 Geocode ──── */
+  function googlePlacesSearch(query, cb) {
+    if (!gApiKey) { console.warn('[GMaps] no API key, skipping search'); cb([]); return; }
+    loadGmaps().then(() => {
+      // 优先用 Places Autocomplete（支持模糊匹配、部分输入）
+      if (window.google?.maps?.places?.AutocompleteService) {
+        const svc = new google.maps.places.AutocompleteService();
+        svc.getQueryPredictions(
+          { input: query, language: lang },
+          (predictions, st) => {
+            console.log('[PlacesAC] query:', query, 'status:', st, 'count:', predictions ? predictions.length : 0);
+            if (st === 'OK' && predictions && predictions.length) {
+              cb(predictions.map(p => ({
+                place_id: p.place_id,
+                display_name: p.description,
+                main_text: (p.structured_formatting && p.structured_formatting.main_text) || p.description.split(',')[0],
+                secondary_text: (p.structured_formatting && p.structured_formatting.secondary_text) || p.description.split(',').slice(1).join(',').trim(),
+                lat: null, lon: null, _pending: true
+              })));
+            } else if (st === 'ZERO_RESULTS') {
+              cb([]);
+            } else {
+              geocodeFallback(query, cb);
+            }
+          });
+      } else {
+        geocodeFallback(query, cb);
+      }
+    }).catch((err) => { console.error('[GMaps] error:', err); cb(null, err.message || String(err)); });
+  }
+
+  function geocodeFallback(query, cb) {
+    console.warn('[GMaps] Places unavailable, using Geocoder fallback');
+    new google.maps.Geocoder().geocode(
+      { address: query, language: lang, region: 'jp' },
+      (gres, gst) => {
+        console.log('[Geocoder] status:', gst, 'count:', gres ? gres.length : 0);
+        if (gst === 'OK' && gres) {
+          cb(gres.map(r => ({
+            lat: r.geometry.location.lat(),
+            lon: r.geometry.location.lng(),
+            display_name: r.formatted_address,
+            _pending: false
+          })));
+        } else if (gst === 'ZERO_RESULTS') {
+          cb([]);
+        } else {
+          throw new Error('Geocoder status: ' + gst);
+        }
+      });
+  }
+
+  /* ── 根据 place_id 解析坐标 ──────────────────────────── */
+  function geocodePlaceId(placeId, cb) {
+    loadGmaps().then(() => {
+      new google.maps.Geocoder().geocode(
+        { placeId: placeId, language: lang, region: 'jp' },
+        (results, st) => {
+          if (st === 'OK' && results && results[0]) {
+            cb({
+              lat: results[0].geometry.location.lat(),
+              lon: results[0].geometry.location.lng()
+            });
+          } else {
+            cb(null);
+          }
+        });
+    }).catch(() => cb(null));
+  }
+
+  function googleReverse(lat, lon, cb) {
+    if (!gApiKey) { cb(null); return; }
+    loadGmaps().then(() => {
+      new google.maps.Geocoder().geocode(
+        { location: { lat: lat, lng: lon }, language: lang, region: 'jp' },
+        (results, st) => { cb(st === 'OK' && results[0] ? gGeocodeResult(results[0]) : null); }
+      );
+    }).catch(() => cb(null));
+  }
+
+  function googleNearbySearch(lat, lon, cb) {
+    if (!gApiKey) { cb([]); return; }
+    loadGmaps().then(() => {
+      new google.maps.places.PlacesService($placesEl)
+        .nearbySearch({
+          location: new google.maps.LatLng(lat, lon),
+          radius: 1000, language: lang
+        }, (results, st) => {
+          cb(st === 'OK' && results ? results.map(gPlaceResult) : []);
+        });
+    }).catch(() => cb([]));
+  }
+
+  /* ── 绘制搜索建议 ──────────────────────────────────── */
+  function renderLocSuggestions(list) {
+    const u = L();
+    $locSugs.innerHTML = '';
+    if (!list || !list.length) {
+      $locSugs.innerHTML = `<div class="loc-empty">${u.locEmpty}</div>`;
+      return;
+    }
+    list.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'loc-suggestion';
+      el.innerHTML =
+        `<span class="loc-sug-pin">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+        </span>
+        <span>
+          <span class="loc-sug-addr">${escHtml(item.main_text || item.display_name.split(',')[0])}</span>
+          <span class="loc-sug-name">${escHtml(item.secondary_text || item.display_name)}</span>
+        </span>`;
+      el.addEventListener('click', () => {
+        if (item._pending) {
+          // 需要先 geocode 获取坐标
+          el.style.opacity = '0.5';
+          el.style.pointerEvents = 'none';
+          geocodePlaceId(item.place_id, coord => {
+            if (coord) {
+              selectCustomLocation({
+                lat: coord.lat,
+                lon: coord.lon,
+                displayName: item.main_text
+              });
+            } else {
+              el.style.opacity = '1';
+              el.style.pointerEvents = 'auto';
+              el.style.color = 'var(--err)';
+            }
+          });
+        } else {
+          selectCustomLocation({
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            displayName: item.main_text
+          });
+        }
+      });
+      $locSugs.appendChild(el);
+    });
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── 搜索防抖 ──────────────────────────────────────── */
+  function doLocSearch(query) {
+    if (!query || query.trim().length < 1) {
+      locSuggestions = [];
+      $locSugs.innerHTML = '';
+      return;
+    }
+    $locSugs.innerHTML = '<div class="loc-loading">…</div>';
+    googlePlacesSearch(query.trim(), (data, errMsg) => {
+      if (errMsg) {
+        $locSugs.innerHTML = `<div class="loc-empty" style="color:var(--err);text-align:center;padding:24px 16px">
+          <p style="margin:0;font-weight:600">Geocoding 错误</p>
+          <p style="margin:4px 0 0;font-size:.8rem;opacity:.7">${escHtml(errMsg)}</p>
+          <p style="margin:8px 0 0;font-size:.75rem;opacity:.5">请检查 Google Cloud Console 中是否已启用 <b>Geocoding API</b></p>
+        </div>`;
+        return;
+      }
+      locSuggestions = data || [];
+      renderLocSuggestions(data || []);
+    });
+  }
+
+  /* ── 选择自定义位置 ────────────────────────────────── */
+  function selectCustomLocation(loc) {
+    custLoc = loc;
+    updateLocLabel();
+    if (sortMode === 'stay') renderSort();
+    renderCards();
+    renderChrome();
+    closeLocDrawer();
+  }
+
+  /* ── 打开/关闭抽屉 ──────────────────────────────────── */
+  function openLocDrawer() {
+    const u = L();
+    $locTitle.textContent = u.locDrawerTitle;
+    $locCurLabel.textContent = u.locUseCurrent;
+    $locSearchIn.placeholder = u.locSearchPh;
+    $locSearchIn.value = '';
+    $locClearBtn.hidden = true;
+    $locSugs.innerHTML = '';
+    $locMask.classList.remove('hidden');
+    if (!gApiKey) {
+      $locSugs.innerHTML = `<div class="loc-empty" style="text-align:center;padding:24px 16px">
+        <p style="margin:0 0 8px;font-weight:600">${lang==='ja'?'APIキーが未設定です':lang==='en'?'API key not configured':'未配置 Google API Key'}</p>
+        <p style="margin:0;font-size:.82rem;opacity:.7">${lang==='ja'?'管理者にお問い合わせください':lang==='en'?'Please contact the administrator':'请联系管理员配置'}</p>
+      </div>`;
+      return;
+    }
+    setTimeout(() => $locSearchIn.focus(), 300);
+  }
+
+  function closeLocDrawer() {
+    $locMask.classList.add('hidden');
+    locSuggestions = [];
+  }
+
+  /* ── 自动定位 → 展示附近位置列表让用户选择 ──────────── */
+  function requestCurrentLocationFull() {
+    const u = L();
+    if (!navigator.geolocation) {
+      alert(u.geoUnsupported);
+      return;
+    }
+    if (!gApiKey) {
+      alert(lang==='ja'?'APIキーが未設定です':lang==='en'?'API key not configured. Please contact the administrator.':'未配置 Google API Key，请联系管理员。');
+      return;
+    }
+    $locCurBtn.disabled = true;
+    $locCurLabel.textContent = u.locating;
+    $locSearchIn.value = '';
+    $locClearBtn.hidden = true;
+    $locSugs.innerHTML = '<div class="loc-loading">…</div>';
+
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        googleReverse(lat, lon, revData => {
+          const revName = (revData && revData.address)
+            ? (revData.address.road || revData.address.neighbourhood || revData.address.suburb || revData.address.city_district || revData.address.city || revData.address.county || revData.display_name.split(',')[0])
+            : `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+
+          googleNearbySearch(lat, lon, nearbyData => {
+            $locCurBtn.disabled = false;
+            $locCurLabel.textContent = u.locUseCurrent;
+            renderLocNearbyList(lat, lon, revName, nearbyData || []);
+          });
+        });
+      },
+      () => {
+        $locCurBtn.disabled = false;
+        $locCurLabel.textContent = u.locUseCurrent;
+        alert(u.geoFail);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  /* ── 绘制「当前位置 + 附近地点」列表 ────────────────── */
+  function renderLocNearbyList(lat, lon, revName, nearbyList) {
+    const u = L();
+    $locSugs.innerHTML = '';
+
+    // 过滤掉与当前位置名称高度相似的结果
+    const revNameLC = revName.toLowerCase();
+    const filtered = (nearbyList || []).filter(item => {
+      const itemName = (item.display_name || '').split(',')[0].trim().toLowerCase();
+      return itemName && itemName !== revNameLC &&
+             !revNameLC.includes(itemName) && !itemName.includes(revNameLC);
+    });
+
+    // 去重（按 display_name 前两段）
+    const seen = new Set();
+    const deduped = [];
+    filtered.forEach(item => {
+      const key = (item.display_name || '').split(',').slice(0, 2).join(',').trim().toLowerCase();
+      if (!seen.has(key)) { seen.add(key); deduped.push(item); }
+    });
+
+    // Section: 当前位置（醒目标识，可直接选中）
+    const curEl = document.createElement('div');
+    curEl.className = 'loc-suggestion loc-suggestion-current';
+    curEl.innerHTML =
+      `<span class="loc-sug-pin" style="color:var(--brand)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--brand)" stroke="var(--brand)" stroke-width="1.5"><circle cx="12" cy="12" r="2"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+      </span>
+      <span>
+        <span class="loc-sug-addr" style="color:var(--brand)">${escHtml(u.locCurrentSpot)}</span>
+        <span class="loc-sug-name">${escHtml(revName)}</span>
+      </span>`;
+    curEl.addEventListener('click', () => selectCustomLocation({
+      lat, lon, displayName: revName.split(',')[0] || revName
+    }));
+    $locSugs.appendChild(curEl);
+
+    // Section: 附近位置
+    if (deduped.length) {
+      const sep = document.createElement('div');
+      sep.className = 'loc-nearby-sep';
+      sep.textContent = u.locNearbyTitle;
+      $locSugs.appendChild(sep);
+
+      deduped.forEach(item => {
+        const name = (item.display_name || '').split(',')[0].trim();
+        const addr = (item.display_name || '').split(',').slice(1).join(',').trim();
+        const el = document.createElement('div');
+        el.className = 'loc-suggestion';
+        el.innerHTML =
+          `<span class="loc-sug-pin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2"/></svg>
+          </span>
+          <span>
+            <span class="loc-sug-addr">${escHtml(name)}</span>
+            <span class="loc-sug-name">${escHtml(addr)}</span>
+          </span>`;
+        el.addEventListener('click', () => selectCustomLocation({
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon),
+          displayName: name
+        }));
+        $locSugs.appendChild(el);
+      });
+    }
+  }
+
+  /* ── 重置为默认民宿位置 ────────────────────────────── */
+  function resetToDefaultLocation() {
+    custLoc = null;
+    updateLocLabel();
+    if (sortMode === 'stay') renderSort();
+    renderCards();
+    renderChrome();
+    closeLocDrawer();
+  }
+
+  /* ── 位置选择器事件 ────────────────────────────────── */
+  $locBtn.addEventListener('click', openLocDrawer);
+
+  $locClose.addEventListener('click', closeLocDrawer);
+
+  $locMask.addEventListener('click', e => {
+    if (e.target === $locMask) closeLocDrawer();
+  });
+
+  $locCurBtn.addEventListener('click', requestCurrentLocationFull);
+
+  $locSearchIn.addEventListener('input', e => {
+    const val = e.target.value;
+    $locClearBtn.hidden = !val;
+    if (locSearchTimer) clearTimeout(locSearchTimer);
+    if (!val || val.trim().length < 1) {
+      $locSugs.innerHTML = '';
+      return;
+    }
+    locSearchTimer = setTimeout(() => doLocSearch(val), 350);
+  });
+
+  $locClearBtn.addEventListener('click', () => {
+    $locSearchIn.value = '';
+    $locClearBtn.hidden = true;
+    $locSugs.innerHTML = '';
+    $locSearchIn.focus();
+  });
+
+  /* ══════════════════════════════════════════════════════
+     预约渠道设置
+     TODO: 填入实际 LINE ID 和微信二维码图片路径
+  ══════════════════════════════════════════════════════ */
+    const WA_NUM   = '85290744644';
+    const LINE_ID  = '';             // TODO: 填入 LINE ID，例如 'kyotobnb'
+    const LINE_URL = LINE_ID
+      ? `https://line.me/ti/p/~${LINE_ID}`
+      : 'https://line.me/';          // 无 ID 时直接打开 LINE 官网
+
+    /* 消息模板（三语）——固定预填「民宿御屋（Onya）住客」 */
+    const MSG_TMPL = {
+      zh: (hotel,s,n,d,t,p) => `您好，我是${hotel}的住客。\n我想预约以下服务：\n门店：${s}\n日期：${d}\n时间：${t}\n人数：${p}人\n姓名：${n}\n请问是否有空位？谢谢！`,
+      en: (hotel,s,n,d,t,p) => `Hello, I'm a guest at ${hotel}.\nI'd like to make a reservation:\nVenue: ${s}\nDate: ${d}\nTime: ${t}\nGuests: ${p}\nName: ${n}\nIs this available? Thank you!`,
+      ja: (hotel,s,n,d,t,p) => `こんにちは。${hotel}の宿泊客です。\n予約をお願いしたいです：\n店舗：${s}\n日付：${d}\n時間：${t}\n人数：${p}名\nお名前：${n}\n空き状況はいかがでしょうか？よろしくお願いします。`,
+    };
+    /* 界面文案（三语） */
+    const BOOK_UI = {
+      zh: { title:'预约', lName:'姓名', lDate:'日期', lTime:'时间', lPax:'人数',
+            waBtn:'通过 WhatsApp 预约', rec:'★ 推荐',
+            lineHint:'复制以下信息，前往添加 LINE 好友后发送',
+            openLine:'打开 LINE',
+            wechatHint:'复制以下信息，扫码添加微信好友后发送',
+            showQR:'显示二维码', hideQR:'收起二维码',
+            copyBtn:'复制信息', copied:'已复制 ✓',
+            qrTip:'长按二维码添加微信' },
+      en: { title:'Reserve', lName:'Name', lDate:'Date', lTime:'Time', lPax:'Guests',
+            waBtn:'Book via WhatsApp', rec:'★ Recommended',
+            lineHint:'Copy the message below, then add us on LINE and send it',
+            openLine:'Open LINE',
+            wechatHint:'Copy the message below, then scan the QR to add us on WeChat',
+            showQR:'Show QR code', hideQR:'Hide QR code',
+            copyBtn:'Copy message', copied:'Copied ✓',
+            qrTip:'Long-press QR to add WeChat' },
+      ja: { title:'予約', lName:'お名前', lDate:'日付', lTime:'時間', lPax:'人数',
+            waBtn:'WhatsApp で予約', rec:'★ おすすめ',
+            lineHint:'以下のメッセージをコピーして、LINE友達追加後に送信してください',
+            openLine:'LINEを開く',
+            wechatHint:'以下のメッセージをコピーして、QRコードをスキャンしてWeChatで送信してください',
+            showQR:'QRコードを表示', hideQR:'QRコードを閉じる',
+            copyBtn:'メッセージをコピー', copied:'コピー済み ✓',
+            qrTip:'QRコードを長押しして追加' },
+    };
+
+    /* ── DOM refs ─────────────────────────────────────── */
+    const $waOverlay  = document.getElementById('wa-overlay');
+    let waStoreName   = '';
+    let curPlat       = 'whatsapp';
+
+    /* ── 构建消息文本 ────────────────────────────────── */
+    function buildMsg() {
+      const tmpl = MSG_TMPL[lang] || MSG_TMPL.zh;
+      const hotel = GUEST_HOTEL[lang] || GUEST_HOTEL.zh;
+      const s = waStoreName || '—';
+      const n = document.getElementById('wa-name').value.trim() || '—';
+      const d = document.getElementById('wa-date').value || '—';
+      const t = document.getElementById('wa-time').value || '—';
+      const p = document.getElementById('wa-pax').value  || '—';
+      return tmpl(hotel, s, n, d, t, p);
+    }
+
+    /* ── 更新预览文本框（LINE / 微信用） ─────────────── */
+    function refreshPreview() {
+      const msg = buildMsg();
+      const lineEl   = document.getElementById('msg-line');
+      const wechatEl = document.getElementById('msg-wechat');
+      if (lineEl)   lineEl.value   = msg;
+      if (wechatEl) wechatEl.value = msg;
+    }
+
+    /* ── 切换渠道 ────────────────────────────────────── */
+    function switchPlat(plat) {
+      curPlat = plat;
+      document.querySelectorAll('.plat-btn').forEach(b =>
+        b.classList.toggle('on', b.dataset.plat === plat));
+      ['whatsapp','line','wechat'].forEach(p => {
+        const el = document.getElementById('act-' + p);
+        if (el) el.classList.toggle('on', p === plat);
+      });
+      if (plat === 'line' || plat === 'wechat') refreshPreview();
+      // 收起所有二维码
+      document.getElementById('qr-wrap')?.classList.remove('show');
+      document.getElementById('line-qr-wrap')?.classList.remove('show');
+    }
+
+    /* ── 打开弹层 ────────────────────────────────────── */
+    function openBookModal(storeName) {
+      waStoreName = storeName;
+      const ui = BOOK_UI[lang] || BOOK_UI.zh;
+      document.getElementById('wa-store-name').textContent = ui.title + '：' + storeName;
+      document.getElementById('wa-l-name').textContent = ui.lName;
+      document.getElementById('wa-l-date').textContent = ui.lDate;
+      document.getElementById('wa-l-time').textContent = ui.lTime;
+      document.getElementById('wa-l-pax').textContent  = ui.lPax;
+      document.getElementById('wa-btn-text').textContent = ui.waBtn;
+      document.getElementById('pb-rec').textContent    = ui.rec;
+      document.getElementById('line-hint').textContent  = ui.lineHint;
+      document.getElementById('wechat-hint').textContent= ui.wechatHint;
+      document.getElementById('copy-line').textContent  = ui.copyBtn;
+      document.getElementById('copy-wechat').textContent= ui.copyBtn;
+      document.getElementById('wechat-qr-toggle').textContent = ui.showQR;
+      document.getElementById('line-qr-toggle').textContent   = ui.showQR;
+      document.getElementById('wechat-qr-tip').textContent    = ui.qrTip;
+      document.getElementById('line-qr-tip').textContent      = ui.qrTip;
+      // 默认日期 = 明天
+      const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+      document.getElementById('wa-date').value = tmr.toISOString().slice(0, 10);
+      document.getElementById('wa-time').value = '19:00';
+      document.getElementById('wa-pax').value  = '2';
+      switchPlat('whatsapp');
+      $waOverlay.classList.add('open');
+    }
+
+    /* ── 关闭 ────────────────────────────────────────── */
+    document.getElementById('wa-close').addEventListener('click', () =>
+      $waOverlay.classList.remove('open'));
+    $waOverlay.addEventListener('click', e => {
+      if (e.target === $waOverlay) $waOverlay.classList.remove('open');
+    });
+
+    /* ── 渠道切换按钮 ────────────────────────────────── */
+    document.getElementById('plat-row').addEventListener('click', e => {
+      const b = e.target.closest('.plat-btn');
+      if (b) switchPlat(b.dataset.plat);
+    });
+
+    /* ── WhatsApp 发送 ───────────────────────────────── */
+    document.getElementById('wa-submit-btn').addEventListener('click', () => {
+      const msg = buildMsg();
+      if (typeof __csTrack === 'function') {
+        __csTrack({
+          action: 'click',
+          btn: 'wa-book',
+          label: 'onya:' + (waStoreName || 'book')
+        });
+      }
+      window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`, '_blank');
+    });
+
+    /* ── 复制信息 ────────────────────────────────────── */
+    function setupCopy(btnId, msgId) {
+      document.getElementById(btnId).addEventListener('click', () => {
+        const text = document.getElementById(msgId).value;
+        const ui   = BOOK_UI[lang] || BOOK_UI.zh;
+        const btn  = document.getElementById(btnId);
+        navigator.clipboard?.writeText(text).catch(() => {
+          const ta = document.getElementById(msgId);
+          ta.select(); document.execCommand('copy');
+        });
+        btn.textContent = ui.copied;
+        btn.classList.add('ok');
+        setTimeout(() => { btn.textContent = ui.copyBtn; btn.classList.remove('ok'); }, 2000);
+      });
+    }
+    setupCopy('copy-line',   'msg-line');
+    setupCopy('copy-wechat', 'msg-wechat');
+
+    /* ── 二维码展开（LINE / 微信共用） ──────────────────── */
+    function setupQRToggle(btnId, wrapId) {
+      document.getElementById(btnId)?.addEventListener('click', () => {
+        const wrap = document.getElementById(wrapId);
+        const ui   = BOOK_UI[lang] || BOOK_UI.zh;
+        const btn  = document.getElementById(btnId);
+        const show = wrap.classList.toggle('show');
+        btn.textContent = show ? ui.hideQR : ui.showQR;
+      });
+    }
+    setupQRToggle('line-qr-toggle',  'line-qr-wrap');
+    setupQRToggle('wechat-qr-toggle','qr-wrap');
+
+    /* ── 表单变动时刷新预览 ──────────────────────────── */
+    ['wa-name','wa-date','wa-time','wa-pax'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if (curPlat === 'line' || curPlat === 'wechat') refreshPreview();
+      });
+    });
+
+    /* ── 卡片预约按钮 ────────────────────────────────── */
+    $cards.addEventListener('click', e => {
+      const btn = e.target.closest('[data-book]');
+      if (!btn) return;
+      const card = btn.closest('.card');
+      const storeName = card?.querySelector('.card-name')?.textContent?.trim() || '';
+      const storeId = card?.dataset?.storeId || 'unknown';
+      if (typeof __csTrack === 'function') {
+        __csTrack({ action: 'click', btn: 'book-' + storeId, label: storeName });
+      }
+      openBookModal(storeName);
+    });
+    $btnCta.addEventListener('click', () => {
+      if (typeof __csTrack === 'function') {
+        __csTrack({ action: 'click', btn: 'cta-bottom', label: L().cta });
+      }
+      openBookModal('');
+    });
+
+
+  /* ── 初始化 ──────────────────────────────────────────── */
+  document.documentElement.lang = lang==='zh' ? 'zh-CN' : lang==='ja' ? 'ja' : 'en';
+  renderChrome(); renderLang(); renderChips(); renderSort(); renderCards();
+  if (exploreUnlocked && exploreUrlFlag === 'show') showCouponToast();
+  else { syncCouponEntry(); syncExploreHint(); }
+})();
+</script>
+
+</body>
+</html>
