@@ -47,6 +47,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
   <script src="stores.js"></script>
+  <script src="coupon-claim.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1193,10 +1194,11 @@
   /* 仅餐厅 / 酒吧 / 体验 闪烁并可计入探索 */
   const EXPLORE_CATS = ['dining','whisky','kimono'];
   const EXPLORE_NEED = 3;
-  const EXPLORE_COUPON = 'KYOTO3CAT';
+  const EXPLORE_COUPON_FALLBACK = 'PENDING';
   const EXPLORE_LS_KEY = 'bnbHubExploreRewardHigaTestPage';
   const EXPLORE_DONE_CAT = 'transfer'; /* 点满后自动跳到接送机 */
   const COUPON_PAGE = 'higa-coupon.html';
+  let exploreCouponCode = (typeof __csGetCachedCoupon === 'function' && __csGetCachedCoupon()) || '';
   /* 本页固定客人来源：民宿御屋（Onya）——预约文案与距离说明共用 */
   const GUEST_HOTEL = {
     zh: '民宿御屋（Onya）',
@@ -1534,16 +1536,22 @@
   }
 
   /* ── 分类胶囊 ────────────────────────────────────────── */
-  /* URL：?explore=reset 清空进度；?explore=show 已领券时直接打开弹层 */
+  /* URL：?explore=reset 清空进度；?explore=show 已领券时直接打开弹层；?coupon=reset 清除本机已领券码（测试用） */
   function applyExploreUrlFlags() {
     const u = new URL(location.href);
     const flag = (u.searchParams.get('explore') || '').toLowerCase();
-    if (!flag) return '';
+    const couponFlag = (u.searchParams.get('coupon') || '').toLowerCase();
+    let dirty = false;
+    if (couponFlag === 'reset' && typeof __csClearCachedCoupon === 'function') {
+      __csClearCachedCoupon();
+      exploreCouponCode = '';
+    }
+    if (couponFlag) { u.searchParams.delete('coupon'); dirty = true; }
     if (flag === 'reset') {
       try { localStorage.removeItem(EXPLORE_LS_KEY); } catch (_) {}
     }
-    u.searchParams.delete('explore');
-    history.replaceState(null, '', u.pathname + u.search + u.hash);
+    if (flag) { u.searchParams.delete('explore'); dirty = true; }
+    if (dirty) history.replaceState(null, '', u.pathname + u.search + u.hash);
     return flag;
   }
   const exploreUrlFlag = applyExploreUrlFlags();
@@ -1625,12 +1633,37 @@
     return !!($couponName.value || '').trim();
   }
 
+  function currentCouponCode() {
+    return exploreCouponCode || EXPLORE_COUPON_FALLBACK;
+  }
+
+  function ensureExploreCoupon(done) {
+    done = done || function () {};
+    if (exploreCouponCode) { done(null, exploreCouponCode); return; }
+    if (typeof __csClaimCoupon !== 'function') {
+      done(new Error('claim helper missing'), null);
+      return;
+    }
+    const $code = document.getElementById('coupon-code-el');
+    if ($code) $code.textContent = '…';
+    __csClaimCoupon({ client: guestClientId(), page: 'higa-test-page' }, (err, res) => {
+      if (err || !res || !res.code) {
+        if ($code) $code.textContent = '—';
+        done(err || new Error('empty'), null);
+        return;
+      }
+      exploreCouponCode = res.code;
+      if ($code) $code.textContent = exploreCouponCode;
+      done(null, exploreCouponCode);
+    });
+  }
+
   function buildCouponMsg() {
     const u = L();
     const name = ($couponName.value || '').trim() || '—';
     const date = $couponDate.value || '—';
     const pax  = $couponPax.value || '—';
-    return u.couponMsg(EXPLORE_COUPON, pName(), guestClientId(), name, date, pax);
+    return u.couponMsg(currentCouponCode(), pName(), guestClientId(), name, date, pax);
   }
 
   function updateCouponPreview() {
@@ -1663,19 +1696,21 @@
     document.getElementById('coupon-offer-kyoto-city').textContent = u.couponOfferKyotoCity;
     document.getElementById('coupon-offer-kyoto-sub').textContent = u.couponOfferKyotoSub;
     document.getElementById('coupon-offer-note').textContent = u.couponOfferNote;
-    document.getElementById('coupon-code-el').textContent = EXPLORE_COUPON;
+    document.getElementById('coupon-code-el').textContent = currentCouponCode();
     $couponClose.setAttribute('aria-label', u.couponClose);
     $couponSubmitText.textContent = u.couponSubmit;
     $couponSubmit.disabled = false;
   }
 
   function goCouponPage() {
-    /* 漏斗：弹窗按钮被点击 */
+    /* 漏斗：弹窗按钮被点击；先确保已从码库领到码再跳转 */
     trackExploreFunnel('explore-popup', 'cta');
-    const u = new URL(COUPON_PAGE, location.href);
-    u.searchParams.set('from', 'higa-test-page.html');
-    u.searchParams.set('lang', lang);
-    location.href = u.toString();
+    ensureExploreCoupon(() => {
+      const u = new URL(COUPON_PAGE, location.href);
+      u.searchParams.set('from', 'higa-test-page.html');
+      u.searchParams.set('lang', lang);
+      location.href = u.toString();
+    });
   }
 
   function showCouponToast() {
@@ -1684,6 +1719,7 @@
     $couponToast.classList.add('open');
     $couponToast.setAttribute('aria-hidden', 'false');
     syncCouponEntry();
+    ensureExploreCoupon();
   }
 
   function hideCouponToast() {
@@ -1713,7 +1749,7 @@
   $couponClose.addEventListener('click', hideCouponToast);
   $couponEntry.addEventListener('click', () => {
     if (typeof __csTrack === 'function') {
-      __csTrack({ action: 'click', btn: 'coupon-entry', label: EXPLORE_COUPON });
+      __csTrack({ action: 'click', btn: 'coupon-entry', label: currentCouponCode() });
     }
     showCouponToast();
   });

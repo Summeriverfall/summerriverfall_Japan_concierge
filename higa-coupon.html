@@ -8,6 +8,7 @@
   <script>
   (function () {
     var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzSD362gcahdmKAWhiYyiPfEXeYnm0SXfBsTJIKx1g7pkMTogd7EtG0O59Gs_rEsX8/exec';
+    window.__CS_STATS_ENDPOINT = ENDPOINT;
     var _client = 'onya';
     window.__CS_CLIENT = _client;
     var _page = 'higa-coupon';
@@ -42,6 +43,7 @@
     __csTrack({ action: 'click', btn: 'explore-form', label: 'coupon-page' });
   })();
   </script>
+  <script src="coupon-claim.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
@@ -256,7 +258,6 @@
   <script>
   (function () {
     const WA_NUM = '85290744644';
-    const COUPON = 'KYOTO3CAT';
     const CLIENT = 'onya';
     const LANGS = ['zh', 'en', 'ja'];
     const LANG_LBL = { zh: '中文', en: 'EN', ja: '日本語' };
@@ -265,6 +266,7 @@
       en: 'Onya Guesthouse',
       ja: '民宿御屋（Onya）',
     };
+    let couponCode = (typeof __csGetCachedCoupon === 'function' && __csGetCachedCoupon()) || '';
     const UI = {
       zh: {
         titleDoc: '领取探索优惠券',
@@ -345,11 +347,36 @@
     const $submit = document.getElementById('submit');
     const $submitText = document.getElementById('submit-text');
 
-    document.getElementById('code').textContent = COUPON;
+    document.getElementById('code').textContent = couponCode || '…';
     const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
     $date.value = tmr.toISOString().slice(0, 10);
 
     function L() { return UI[lang] || UI.zh; }
+
+    function claimCode(done) {
+      done = done || function () {};
+      if (couponCode) {
+        document.getElementById('code').textContent = couponCode;
+        done(null, couponCode);
+        return;
+      }
+      if (typeof __csClaimCoupon !== 'function') {
+        document.getElementById('code').textContent = '—';
+        done(new Error('no helper'), null);
+        return;
+      }
+      __csClaimCoupon({ client: CLIENT, page: 'higa-coupon' }, function (err, res) {
+        if (err || !res || !res.code) {
+          document.getElementById('code').textContent = '—';
+          done(err || new Error('empty'), null);
+          return;
+        }
+        couponCode = res.code;
+        document.getElementById('code').textContent = couponCode;
+        refresh();
+        done(null, couponCode);
+      });
+    }
 
     function syncBackHref() {
       const u = new URL(from, location.href);
@@ -404,7 +431,7 @@
       const name = ($name.value || '').trim() || '—';
       const date = $date.value || '—';
       const pax = $pax.value || '—';
-      return u.msg(COUPON, HOTEL[lang] || HOTEL.zh, CLIENT, name, date, pax);
+      return u.msg(couponCode || '—', HOTEL[lang] || HOTEL.zh, CLIENT, name, date, pax);
     }
 
     function refresh() {
@@ -427,24 +454,28 @@
       if (!($name.value || '').trim()) {
         $name.classList.add('err'); $name.focus(); return;
       }
-      const u = L();
-      const url = `https://wa.me/${WA_NUM}?text=${encodeURIComponent(buildMsg())}`;
-      if (typeof __csTrack === 'function') {
-        __csTrack({ action: 'click', btn: 'coupon-wa', label: COUPON });
-      }
-      $submit.disabled = true;
-      $submitText.dataset.redirecting = '1';
-      $submitText.textContent = u.redirecting;
-      setTimeout(() => {
-        window.open(url, '_blank');
-        $submitText.dataset.redirecting = '';
-        $submitText.textContent = u.submit;
-        $submit.disabled = !($name.value || '').trim();
-      }, 400);
+      claimCode(function (err) {
+        if (err || !couponCode) return;
+        const u = L();
+        const url = `https://wa.me/${WA_NUM}?text=${encodeURIComponent(buildMsg())}`;
+        if (typeof __csTrack === 'function') {
+          __csTrack({ action: 'click', btn: 'coupon-wa', label: couponCode });
+        }
+        $submit.disabled = true;
+        $submitText.dataset.redirecting = '1';
+        $submitText.textContent = u.redirecting;
+        setTimeout(() => {
+          window.open(url, '_blank');
+          $submitText.dataset.redirecting = '';
+          $submitText.textContent = u.submit;
+          $submit.disabled = !($name.value || '').trim();
+        }, 400);
+      });
     });
 
     try { localStorage.setItem('bnbHubLang', lang); } catch (_) {}
     applyUI();
+    claimCode();
   })();
   </script>
 </body>
