@@ -449,23 +449,34 @@
       font-size: .72rem; color: var(--sub); line-height: 1.45;
     }
     .coupon-offer {
-      display: grid; gap: .35rem;
-      margin: 0 0 .75rem; padding: .7rem .75rem;
+      display: grid; gap: 0;
+      margin: 0 0 .75rem; padding: .15rem 0;
       border-radius: 12px;
       background: linear-gradient(160deg, #f0faf8, #fffbeb);
       border: 1px solid #d8ebe6;
+      overflow: hidden;
     }
     .coupon-offer-row {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: .5rem; font-size: .75rem; color: var(--sub);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: .5rem; padding: .65rem .8rem;
+      font-size: .78rem; color: var(--sub);
     }
-    .coupon-offer-row .lbl { font-weight: 650; }
-    .coupon-offer-row .val { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
-    .coupon-offer-row .val.strike {
-      text-decoration: line-through; color: var(--muted); font-weight: 650;
+    .coupon-offer-row + .coupon-offer-row {
+      border-top: 1px dashed rgba(15,118,110,.18);
     }
-    .coupon-offer-row.deal .val {
-      font-size: 1.15rem; color: #b45309; letter-spacing: .02em;
+    .coupon-offer-row .route {
+      display: flex; flex-direction: column; gap: .12rem; min-width: 0;
+    }
+    .coupon-offer-row .route .city {
+      font-weight: 800; color: var(--brand-dk); font-size: .82rem;
+    }
+    .coupon-offer-row .route .sub {
+      font-size: .68rem; color: var(--muted); font-weight: 550;
+    }
+    .coupon-offer-row .val {
+      flex-shrink: 0;
+      font-weight: 800; font-size: 1.05rem; color: #b45309;
+      font-variant-numeric: tabular-nums; letter-spacing: .02em;
     }
     .coupon-code {
       display: flex; align-items: center; justify-content: center;
@@ -1122,16 +1133,18 @@
     <p class="coupon-desc" id="coupon-desc"></p>
     <div class="coupon-offer" id="coupon-offer">
       <div class="coupon-offer-row">
-        <span class="lbl" id="coupon-offer-orig-lbl">接送机原价</span>
-        <span class="val strike">¥15,000</span>
+        <span class="route">
+          <span class="city" id="coupon-offer-osaka-city">大阪</span>
+          <span class="sub" id="coupon-offer-osaka-sub">机场接送</span>
+        </span>
+        <span class="val" id="coupon-offer-osaka-price">¥12,000</span>
       </div>
       <div class="coupon-offer-row">
-        <span class="lbl" id="coupon-offer-off-lbl">预约客户优惠</span>
-        <span class="val">−¥3,000</span>
-      </div>
-      <div class="coupon-offer-row deal">
-        <span class="lbl" id="coupon-offer-deal-lbl">现在最低只要</span>
-        <span class="val">¥12,000</span>
+        <span class="route">
+          <span class="city" id="coupon-offer-kyoto-city">京都</span>
+          <span class="sub" id="coupon-offer-kyoto-sub">机场接送</span>
+        </span>
+        <span class="val" id="coupon-offer-kyoto-price">¥22,000</span>
       </div>
     </div>
     <div class="coupon-code" id="coupon-code-el"></div>
@@ -1292,11 +1305,12 @@
       aBook:    '占位：预约入口 (LINE / 表单)。',
       aCta:     '占位：全局联系 / 预约。',
       couponEyebrow: '老客专属',
-      couponTitle: '接送机专属优惠已解锁',
-      couponDesc: '接送机原价 ¥15,000。作为我们的预约客户，现享 ¥3,000 优惠——最低只需 ¥12,000，即可安排一次接送机服务。填写信息后即可通过 WhatsApp 领取。',
-      couponOfferOrigLbl: '接送机原价',
-      couponOfferOffLbl: '预约客户优惠',
-      couponOfferDealLbl: '现在最低只要',
+      couponTitle: '接送机专属报价已解锁',
+      couponDesc: '作为预约客户，可按行程选择大阪或京都机场接送。填写信息后即可通过 WhatsApp 领取。',
+      couponOfferOsakaCity: '大阪',
+      couponOfferOsakaSub: '机场接送',
+      couponOfferKyotoCity: '京都',
+      couponOfferKyotoSub: '机场接送',
       couponClose: '关闭',
       couponEntry: '我的优惠券',
       couponLName: '姓名 *',
@@ -1349,11 +1363,12 @@
       aBook:    'Placeholder: booking flow (LINE / form).',
       aCta:     'Placeholder: concierge / booking.',
       couponEyebrow: 'Returning guest offer',
-      couponTitle: 'Airport transfer discount unlocked',
-      couponDesc: 'Standard airport transfer is ¥15,000. As a returning guest, you get ¥3,000 off—now from ¥12,000 per transfer. Fill in your details to redeem via WhatsApp.',
-      couponOfferOrigLbl: 'Standard price',
-      couponOfferOffLbl: 'Guest discount',
-      couponOfferDealLbl: 'Now from',
+      couponTitle: 'Airport transfer rates unlocked',
+      couponDesc: 'As a returning guest, choose Osaka or Kyoto airport transfer at the rates below. Fill in your details to redeem via WhatsApp.',
+      couponOfferOsakaCity: 'Osaka',
+      couponOfferOsakaSub: 'Airport transfer',
+      couponOfferKyotoCity: 'Kyoto',
+      couponOfferKyotoSub: 'Airport transfer',
       couponClose: 'Close',
       couponEntry: 'My coupon',
       couponLName: 'Name *',
@@ -1406,11 +1421,12 @@
       aBook:    'プレースホルダー：予約。',
       aCta:     'プレースホルダー：窓口。',
       couponEyebrow: 'ご予約のお客様限定',
-      couponTitle: '空港送迎の特別割引を解除しました',
-      couponDesc: '通常の空港送迎は ¥15,000。ご予約のお客様限定で ¥3,000 オフ——最低 ¥12,000 で空港送迎を1回ご利用いただけます。情報を入力して WhatsApp で受け取ります。',
-      couponOfferOrigLbl: '通常料金',
-      couponOfferOffLbl: 'お客様限定割引',
-      couponOfferDealLbl: '今なら最低',
+      couponTitle: '空港送迎の特別料金を解除しました',
+      couponDesc: 'ご予約のお客様は、大阪または京都の空港送迎を下記料金でご利用いただけます。情報を入力して WhatsApp で受け取ります。',
+      couponOfferOsakaCity: '大阪',
+      couponOfferOsakaSub: '空港送迎',
+      couponOfferKyotoCity: '京都',
+      couponOfferKyotoSub: '空港送迎',
       couponClose: '閉じる',
       couponEntry: 'マイクーポン',
       couponLName: 'お名前 *',
@@ -1637,9 +1653,10 @@
     document.getElementById('coupon-eyebrow').textContent = u.couponEyebrow;
     document.getElementById('coupon-title').textContent = u.couponTitle;
     document.getElementById('coupon-desc').textContent = u.couponDesc;
-    document.getElementById('coupon-offer-orig-lbl').textContent = u.couponOfferOrigLbl;
-    document.getElementById('coupon-offer-off-lbl').textContent = u.couponOfferOffLbl;
-    document.getElementById('coupon-offer-deal-lbl').textContent = u.couponOfferDealLbl;
+    document.getElementById('coupon-offer-osaka-city').textContent = u.couponOfferOsakaCity;
+    document.getElementById('coupon-offer-osaka-sub').textContent = u.couponOfferOsakaSub;
+    document.getElementById('coupon-offer-kyoto-city').textContent = u.couponOfferKyotoCity;
+    document.getElementById('coupon-offer-kyoto-sub').textContent = u.couponOfferKyotoSub;
     document.getElementById('coupon-code-el').textContent = EXPLORE_COUPON;
     document.getElementById('coupon-l-name').textContent = u.couponLName;
     document.getElementById('coupon-l-date').textContent = u.couponLDate;
