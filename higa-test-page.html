@@ -1652,7 +1652,8 @@
   }
 
   function goCouponPage() {
-    trackExploreFunnel('explore-popup', 'redirect-page');
+    /* 漏斗：弹窗按钮被点击 */
+    trackExploreFunnel('explore-popup', 'cta');
     const u = new URL(COUPON_PAGE, location.href);
     u.searchParams.set('from', 'higa-test-page.html');
     const langQ = new URLSearchParams(location.search).get('lang');
@@ -1661,8 +1662,8 @@
   }
 
   function showCouponToast() {
+    /* 只展示，不计入「弹窗按钮点击」——点击 CTA 才打 explore-popup */
     renderCouponToast();
-    trackExploreFunnel('explore-popup', 'offer-toast');
     $couponToast.classList.add('open');
     $couponToast.setAttribute('aria-hidden', 'false');
     syncCouponEntry();

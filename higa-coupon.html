@@ -28,7 +28,8 @@
       new Image().src = ENDPOINT + '?' + parts.join('&');
     };
     __csTrack({ action: 'hit', title: 'onya · coupon-page' });
-    __csTrack({ action: 'click', btn: 'explore-popup', label: 'page' });
+    /* 漏斗：进入领取填信息页 */
+    __csTrack({ action: 'click', btn: 'explore-form', label: 'coupon-page' });
   })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
