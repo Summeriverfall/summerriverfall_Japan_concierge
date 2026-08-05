@@ -1441,12 +1441,10 @@
       aCta:     'プレースホルダー：窓口。',
       couponEyebrow: 'ご予約のお客様限定',
       couponTitle: '空港送迎の特別料金を解除しました',
-      couponDesc: 'ご予約のお客様は、大阪・京都の空港送迎がそれぞれ ¥3,000 オフです。情報を入力して WhatsApp で受け取ります。',
-      couponOfferOsakaCity: '大阪',
-      couponOfferOsakaSub: '空港送迎',
-      couponOfferKyotoCity: '京都',
-      couponOfferKyotoSub: '空港送迎',
-      couponOfferOff: '¥3,000 オフ',
+      couponDesc: 'ご予約のお客様のため、下記ルートはすでに割引済みです。情報を入力して WhatsApp で受け取ります。',
+      couponOfferOsakaCity: '大阪 · 空港送迎',
+      couponOfferKyotoCity: '京都 · 空港送迎',
+      couponOfferOff: 'ご予約限定 −¥3,000',
       couponClose: '閉じる',
       couponEntry: 'マイクーポン',
       couponLName: 'お名前 *',
@@ -1705,9 +1703,7 @@
     document.getElementById('coupon-title').textContent = u.couponTitle;
     document.getElementById('coupon-desc').textContent = u.couponDesc;
     document.getElementById('coupon-offer-osaka-city').textContent = u.couponOfferOsakaCity;
-    document.getElementById('coupon-offer-osaka-sub').textContent = u.couponOfferOsakaSub;
     document.getElementById('coupon-offer-kyoto-city').textContent = u.couponOfferKyotoCity;
-    document.getElementById('coupon-offer-kyoto-sub').textContent = u.couponOfferKyotoSub;
     document.getElementById('coupon-offer-osaka-off').textContent = u.couponOfferOff;
     document.getElementById('coupon-offer-kyoto-off').textContent = u.couponOfferOff;
     document.getElementById('coupon-code-el').textContent = currentCouponCode();
