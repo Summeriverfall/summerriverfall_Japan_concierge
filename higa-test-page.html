@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <title>合作体验 · Test</title>
+  <title>合作体验 · Test（跳转领券）</title>
 
   <!-- ── 页面打开统计（与 booking-cs 共用 Google Sheet）──── -->
   <script>
@@ -15,7 +15,7 @@
     /* higa.html 固定记为 page=higa；client=onya 便于表格区分客户 */
     var _client = 'onya';
     window.__CS_CLIENT = _client;
-    var _page = 'higa-test'; /* 弹窗版；漏斗统计 page=higa-test */
+    var _page = 'higa-test-page'; /* 跳转独立页版 */
 
     window.__csTrack = function (opts) {
       if (!ENDPOINT) return;
@@ -1137,8 +1137,9 @@
   const EXPLORE_CATS = ['dining','whisky','kimono'];
   const EXPLORE_NEED = 3;
   const EXPLORE_COUPON = 'KYOTO3CAT';
-  const EXPLORE_LS_KEY = 'bnbHubExploreRewardHigaTest';
+  const EXPLORE_LS_KEY = 'bnbHubExploreRewardHigaTestPage';
   const EXPLORE_DONE_CAT = 'transfer'; /* 点满后自动跳到接送机 */
+  const COUPON_PAGE = 'higa-coupon.html';
   /* 本页固定客人来源：民宿御屋（Onya）——预约文案与距离说明共用 */
   const GUEST_HOTEL = {
     zh: '民宿御屋（Onya）',
@@ -1603,13 +1604,18 @@
     updateCouponPreview();
   }
 
+  function goCouponPage() {
+    trackExploreFunnel('explore-popup', 'redirect-page');
+    const u = new URL(COUPON_PAGE, location.href);
+    u.searchParams.set('from', 'higa-test-page.html');
+    const langQ = new URLSearchParams(location.search).get('lang');
+    if (langQ) u.searchParams.set('lang', langQ);
+    location.href = u.toString();
+  }
+
   function showCouponToast() {
-    renderCouponToast();
-    $couponToast.classList.add('open');
-    $couponToast.setAttribute('aria-hidden', 'false');
-    syncCouponEntry();
-    syncExploreHint();
-    trackExploreFunnel('explore-popup', 'toast');
+    /* 跳转版：不弹窗，改开独立领券页 */
+    goCouponPage();
   }
 
   function hideCouponToast() {
@@ -1630,8 +1636,10 @@
     if (step < EXPLORE_NEED) return;
     exploreUnlocked = true;
     saveExploreState();
-    activeCat = EXPLORE_DONE_CAT; /* 自动跳到接送机 */
-    showCouponToast();
+    activeCat = EXPLORE_DONE_CAT;
+    renderChips();
+    renderCards();
+    goCouponPage();
   }
 
   $couponClose.addEventListener('click', hideCouponToast);
