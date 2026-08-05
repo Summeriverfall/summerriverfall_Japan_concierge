@@ -1656,8 +1656,7 @@
     trackExploreFunnel('explore-popup', 'cta');
     const u = new URL(COUPON_PAGE, location.href);
     u.searchParams.set('from', 'higa-test-page.html');
-    const langQ = new URLSearchParams(location.search).get('lang');
-    if (langQ) u.searchParams.set('lang', langQ);
+    u.searchParams.set('lang', lang);
     location.href = u.toString();
   }
 
