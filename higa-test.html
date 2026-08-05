@@ -460,36 +460,37 @@
       overflow: hidden;
     }
     .coupon-offer-row {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: .5rem; padding: .65rem .8rem;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: .5rem; padding: .75rem .8rem;
       font-size: .78rem; color: var(--sub);
     }
     .coupon-offer-row + .coupon-offer-row {
       border-top: 1px dashed rgba(15,118,110,.18);
     }
     .coupon-offer-row .route {
-      display: flex; flex-direction: column; gap: .12rem; min-width: 0;
+      display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; min-width: 0;
     }
     .coupon-offer-row .route .city {
-      font-weight: 800; color: var(--brand-dk); font-size: .82rem;
+      font-weight: 800; color: var(--brand-dk); font-size: .84rem;
     }
-    .coupon-offer-row .route .sub {
-      font-size: .68rem; color: var(--muted); font-weight: 550;
+    .coupon-offer-row .route .badge {
+      display: inline-flex; align-items: center;
+      padding: .22rem .5rem; border-radius: 999px;
+      background: #c2410c; color: #fff;
+      font-size: .7rem; font-weight: 850; letter-spacing: .02em;
     }
     .coupon-offer-row .val {
       flex-shrink: 0;
-      display: flex; flex-direction: column; align-items: flex-end; gap: .1rem;
+      display: flex; flex-direction: column; align-items: flex-end; gap: .12rem;
       font-variant-numeric: tabular-nums; letter-spacing: .02em;
+      text-align: right;
     }
     .coupon-offer-row .val .was {
-      font-size: .68rem; font-weight: 650; color: var(--muted);
+      font-size: .7rem; font-weight: 650; color: var(--muted);
       text-decoration: line-through;
     }
     .coupon-offer-row .val .now {
-      font-weight: 800; font-size: 1.05rem; color: #b45309;
-    }
-    .coupon-offer-row .val .off {
-      font-size: .62rem; font-weight: 750; color: var(--brand);
+      font-weight: 900; font-size: 1.22rem; color: #b45309; line-height: 1.15;
     }
     .coupon-code {
       display: flex; align-items: center; justify-content: center;
@@ -1147,24 +1148,22 @@
     <div class="coupon-offer" id="coupon-offer">
       <div class="coupon-offer-row">
         <span class="route">
-          <span class="city" id="coupon-offer-osaka-city">大阪</span>
-          <span class="sub" id="coupon-offer-osaka-sub">机场接送</span>
+          <span class="city" id="coupon-offer-osaka-city">大阪 · 机场接送</span>
+          <span class="badge" id="coupon-offer-osaka-off">老客立减 ¥3,000</span>
         </span>
-        <span class="val" id="coupon-offer-osaka-price">
+        <span class="val">
           <span class="was">¥15,000</span>
           <span class="now">¥12,000</span>
-          <span class="off" id="coupon-offer-osaka-off">优惠 ¥3,000</span>
         </span>
       </div>
       <div class="coupon-offer-row">
         <span class="route">
-          <span class="city" id="coupon-offer-kyoto-city">京都</span>
-          <span class="sub" id="coupon-offer-kyoto-sub">机场接送</span>
+          <span class="city" id="coupon-offer-kyoto-city">京都 · 机场接送</span>
+          <span class="badge" id="coupon-offer-kyoto-off">老客立减 ¥3,000</span>
         </span>
-        <span class="val" id="coupon-offer-kyoto-price">
+        <span class="val">
           <span class="was">¥25,000</span>
           <span class="now">¥22,000</span>
-          <span class="off" id="coupon-offer-kyoto-off">优惠 ¥3,000</span>
         </span>
       </div>
     </div>
@@ -1328,12 +1327,10 @@
       aCta:     '占位：全局联系 / 预约。',
       couponEyebrow: '老客专属',
       couponTitle: '接送机专属报价已解锁',
-      couponDesc: '作为预约客户，大阪 / 京都接送机各享 ¥3,000 优惠。填写信息后即可通过 WhatsApp 领取。',
-      couponOfferOsakaCity: '大阪',
-      couponOfferOsakaSub: '机场接送',
-      couponOfferKyotoCity: '京都',
-      couponOfferKyotoSub: '机场接送',
-      couponOfferOff: '优惠 ¥3,000',
+      couponDesc: '因为您是预约客户，以下线路已自动减免。填写信息后即可通过 WhatsApp 领取。',
+      couponOfferOsakaCity: '大阪 · 机场接送',
+      couponOfferKyotoCity: '京都 · 机场接送',
+      couponOfferOff: '老客立减 ¥3,000',
       couponClose: '关闭',
       couponEntry: '我的优惠券',
       couponLName: '姓名 *',
@@ -1387,12 +1384,10 @@
       aCta:     'Placeholder: concierge / booking.',
       couponEyebrow: 'Returning guest offer',
       couponTitle: 'Airport transfer rates unlocked',
-      couponDesc: 'As a returning guest, Osaka and Kyoto transfers each include ¥3,000 off. Fill in your details to redeem via WhatsApp.',
-      couponOfferOsakaCity: 'Osaka',
-      couponOfferOsakaSub: 'Airport transfer',
-      couponOfferKyotoCity: 'Kyoto',
-      couponOfferKyotoSub: 'Airport transfer',
-      couponOfferOff: '¥3,000 off',
+      couponDesc: 'Because you are a returning guest, these routes already include your discount. Fill in your details to redeem via WhatsApp.',
+      couponOfferOsakaCity: 'Osaka · Airport transfer',
+      couponOfferKyotoCity: 'Kyoto · Airport transfer',
+      couponOfferOff: 'Guest −¥3,000',
       couponClose: 'Close',
       couponEntry: 'My coupon',
       couponLName: 'Name *',
