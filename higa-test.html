@@ -448,6 +448,25 @@
       margin: 0 0 .65rem;
       font-size: .72rem; color: var(--sub); line-height: 1.45;
     }
+    .coupon-offer {
+      display: grid; gap: .35rem;
+      margin: 0 0 .75rem; padding: .7rem .75rem;
+      border-radius: 12px;
+      background: linear-gradient(160deg, #f0faf8, #fffbeb);
+      border: 1px solid #d8ebe6;
+    }
+    .coupon-offer-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: .5rem; font-size: .75rem; color: var(--sub);
+    }
+    .coupon-offer-row .lbl { font-weight: 650; }
+    .coupon-offer-row .val { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .coupon-offer-row .val.strike {
+      text-decoration: line-through; color: var(--muted); font-weight: 650;
+    }
+    .coupon-offer-row.deal .val {
+      font-size: 1.15rem; color: #b45309; letter-spacing: .02em;
+    }
     .coupon-code {
       display: flex; align-items: center; justify-content: center;
       margin-bottom: .75rem; padding: .58rem .7rem;
@@ -1101,6 +1120,20 @@
     <p class="coupon-eyebrow" id="coupon-eyebrow"></p>
     <p class="coupon-title" id="coupon-title"></p>
     <p class="coupon-desc" id="coupon-desc"></p>
+    <div class="coupon-offer" id="coupon-offer">
+      <div class="coupon-offer-row">
+        <span class="lbl" id="coupon-offer-orig-lbl">接送机原价</span>
+        <span class="val strike">¥15,000</span>
+      </div>
+      <div class="coupon-offer-row">
+        <span class="lbl" id="coupon-offer-off-lbl">预约客户优惠</span>
+        <span class="val">−¥3,000</span>
+      </div>
+      <div class="coupon-offer-row deal">
+        <span class="lbl" id="coupon-offer-deal-lbl">现在最低只要</span>
+        <span class="val">¥12,000</span>
+      </div>
+    </div>
     <div class="coupon-code" id="coupon-code-el"></div>
     <div class="coupon-fields">
       <div class="coupon-field full">
@@ -1258,9 +1291,12 @@
       lAria:    '界面语言',
       aBook:    '占位：预约入口 (LINE / 表单)。',
       aCta:     '占位：全局联系 / 预约。',
-      couponEyebrow: '探索奖励',
-      couponTitle: '恭喜！获得专属优惠券',
-      couponDesc: '填写信息后预览消息，再跳转 WhatsApp 领取。',
+      couponEyebrow: '老客专属',
+      couponTitle: '接送机专属优惠已解锁',
+      couponDesc: '接送机原价 ¥15,000。作为我们的预约客户，现享 ¥3,000 优惠——最低只需 ¥12,000，即可安排一次接送机服务。填写信息后即可通过 WhatsApp 领取。',
+      couponOfferOrigLbl: '接送机原价',
+      couponOfferOffLbl: '预约客户优惠',
+      couponOfferDealLbl: '现在最低只要',
       couponClose: '关闭',
       couponEntry: '我的优惠券',
       couponLName: '姓名 *',
@@ -1312,9 +1348,12 @@
       lAria:    'Language',
       aBook:    'Placeholder: booking flow (LINE / form).',
       aCta:     'Placeholder: concierge / booking.',
-      couponEyebrow: 'Explore reward',
-      couponTitle: 'You unlocked a coupon!',
-      couponDesc: 'Fill in your details, preview the message, then open WhatsApp to redeem.',
+      couponEyebrow: 'Returning guest offer',
+      couponTitle: 'Airport transfer discount unlocked',
+      couponDesc: 'Standard airport transfer is ¥15,000. As a returning guest, you get ¥3,000 off—now from ¥12,000 per transfer. Fill in your details to redeem via WhatsApp.',
+      couponOfferOrigLbl: 'Standard price',
+      couponOfferOffLbl: 'Guest discount',
+      couponOfferDealLbl: 'Now from',
       couponClose: 'Close',
       couponEntry: 'My coupon',
       couponLName: 'Name *',
@@ -1366,9 +1405,12 @@
       lAria:    '表示言語',
       aBook:    'プレースホルダー：予約。',
       aCta:     'プレースホルダー：窓口。',
-      couponEyebrow: '探索ボーナス',
-      couponTitle: 'クーポンを獲得しました！',
-      couponDesc: '情報を入力してプレビューを確認後、WhatsApp で受け取ります。',
+      couponEyebrow: 'ご予約のお客様限定',
+      couponTitle: '空港送迎の特別割引を解除しました',
+      couponDesc: '通常の空港送迎は ¥15,000。ご予約のお客様限定で ¥3,000 オフ——最低 ¥12,000 で空港送迎を1回ご利用いただけます。情報を入力して WhatsApp で受け取ります。',
+      couponOfferOrigLbl: '通常料金',
+      couponOfferOffLbl: 'お客様限定割引',
+      couponOfferDealLbl: '今なら最低',
       couponClose: '閉じる',
       couponEntry: 'マイクーポン',
       couponLName: 'お名前 *',
@@ -1595,6 +1637,9 @@
     document.getElementById('coupon-eyebrow').textContent = u.couponEyebrow;
     document.getElementById('coupon-title').textContent = u.couponTitle;
     document.getElementById('coupon-desc').textContent = u.couponDesc;
+    document.getElementById('coupon-offer-orig-lbl').textContent = u.couponOfferOrigLbl;
+    document.getElementById('coupon-offer-off-lbl').textContent = u.couponOfferOffLbl;
+    document.getElementById('coupon-offer-deal-lbl').textContent = u.couponOfferDealLbl;
     document.getElementById('coupon-code-el').textContent = EXPLORE_COUPON;
     document.getElementById('coupon-l-name').textContent = u.couponLName;
     document.getElementById('coupon-l-date').textContent = u.couponLDate;

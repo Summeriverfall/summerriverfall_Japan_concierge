@@ -448,6 +448,29 @@
       margin: 0 0 .65rem;
       font-size: .72rem; color: var(--sub); line-height: 1.45;
     }
+    .coupon-offer {
+      display: grid; gap: .35rem;
+      margin: 0 0 .75rem; padding: .7rem .75rem;
+      border-radius: 12px;
+      background: linear-gradient(160deg, #f0faf8, #fffbeb);
+      border: 1px solid #d8ebe6;
+    }
+    .coupon-offer-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: .5rem; font-size: .75rem; color: var(--sub);
+    }
+    .coupon-offer-row .lbl { font-weight: 650; }
+    .coupon-offer-row .val { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .coupon-offer-row .val.strike {
+      text-decoration: line-through; color: var(--muted); font-weight: 650;
+    }
+    .coupon-offer-row.deal .val {
+      font-size: 1.15rem; color: #b45309; letter-spacing: .02em;
+    }
+    .coupon-offer-note {
+      margin: .15rem 0 0; font-size: .68rem; color: var(--brand); font-weight: 650;
+      line-height: 1.4;
+    }
     .coupon-code {
       display: flex; align-items: center; justify-content: center;
       margin-bottom: .75rem; padding: .58rem .7rem;
@@ -458,12 +481,8 @@
       font-size: 1.08rem; font-weight: 800; letter-spacing: .1em;
       color: var(--brand-dk);
     }
-    .coupon-fields {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: .45rem .5rem;
-      margin-bottom: .65rem;
-    }
+    .coupon-fields { display: none; }
+    .coupon-preview { display: none !important; }
     .coupon-field {
       display: flex; flex-direction: column; gap: .2rem;
     }
@@ -1101,11 +1120,27 @@
     <p class="coupon-eyebrow" id="coupon-eyebrow"></p>
     <p class="coupon-title" id="coupon-title"></p>
     <p class="coupon-desc" id="coupon-desc"></p>
+    <div class="coupon-offer" id="coupon-offer" aria-hidden="false">
+      <div class="coupon-offer-row">
+        <span class="lbl" id="coupon-offer-orig-lbl">接送机原价</span>
+        <span class="val strike" id="coupon-offer-orig">¥15,000</span>
+      </div>
+      <div class="coupon-offer-row">
+        <span class="lbl" id="coupon-offer-off-lbl">预约客户优惠</span>
+        <span class="val" id="coupon-offer-off">−¥3,000</span>
+      </div>
+      <div class="coupon-offer-row deal">
+        <span class="lbl" id="coupon-offer-deal-lbl">现在最低只要</span>
+        <span class="val" id="coupon-offer-deal">¥12,000</span>
+      </div>
+      <p class="coupon-offer-note" id="coupon-offer-note"></p>
+    </div>
     <div class="coupon-code" id="coupon-code-el"></div>
-    <div class="coupon-fields">
+    <!-- 表单已移至独立领券页；保留隐藏节点以免旧逻辑报错 -->
+    <div class="coupon-fields" hidden>
       <div class="coupon-field full">
         <label id="coupon-l-name" for="coupon-name">姓名</label>
-        <input type="text" id="coupon-name" autocomplete="name" required>
+        <input type="text" id="coupon-name" autocomplete="name">
       </div>
       <div class="coupon-field">
         <label id="coupon-l-date" for="coupon-date">日期</label>
@@ -1116,18 +1151,16 @@
         <input type="number" id="coupon-pax" min="1" max="30" value="2">
       </div>
     </div>
-    <div class="coupon-preview" id="coupon-preview">
+    <div class="coupon-preview" id="coupon-preview" hidden>
       <div class="coupon-preview-head">
-        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.884-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-        <span id="coupon-preview-title">WhatsApp 消息预览</span>
+        <span id="coupon-preview-title"></span>
       </div>
       <pre class="coupon-preview-body" id="coupon-preview-body"></pre>
-      <p class="coupon-preview-hint" id="coupon-preview-hint">请先填写上方信息，即可预览发送内容。</p>
+      <p class="coupon-preview-hint" id="coupon-preview-hint"></p>
     </div>
     <div class="coupon-actions">
-      <button class="coupon-submit" id="coupon-submit" type="button" disabled>
-        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.884-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-        <span id="coupon-submit-text">通过 WhatsApp 领取</span>
+      <button class="coupon-submit" id="coupon-submit" type="button">
+        <span id="coupon-submit-text">立即领取优惠</span>
       </button>
     </div>
   </div>
@@ -1259,9 +1292,13 @@
       lAria:    '界面语言',
       aBook:    '占位：预约入口 (LINE / 表单)。',
       aCta:     '占位：全局联系 / 预约。',
-      couponEyebrow: '探索奖励',
-      couponTitle: '恭喜！获得专属优惠券',
-      couponDesc: '填写信息后预览消息，再跳转 WhatsApp 领取。',
+      couponEyebrow: '老客专属',
+      couponTitle: '接送机专属优惠已解锁',
+      couponDesc: '接送机原价 ¥15,000。作为我们的预约客户，现享 ¥3,000 优惠——最低只需 ¥12,000，即可安排一次接送机服务。',
+      couponOfferOrigLbl: '接送机原价',
+      couponOfferOffLbl: '预约客户优惠',
+      couponOfferDealLbl: '现在最低只要',
+      couponOfferNote: '填写信息后即可通过 WhatsApp 领取',
       couponClose: '关闭',
       couponEntry: '我的优惠券',
       couponLName: '姓名 *',
@@ -1269,7 +1306,7 @@
       couponLPax: '人数',
       couponPreviewTitle: 'WhatsApp 消息预览',
       couponPreviewHint: '请先填写姓名，即可预览发送内容。',
-      couponSubmit: '通过 WhatsApp 领取',
+      couponSubmit: '立即领取优惠',
       couponRedirecting: '跳转中…',
       exploreHint: '点亮 <strong>餐厅、酒吧、体验</strong> 共 3 类，即可领取专属优惠券',
       couponMsg: (code, hotel, client, name, date, pax) =>
@@ -1313,9 +1350,13 @@
       lAria:    'Language',
       aBook:    'Placeholder: booking flow (LINE / form).',
       aCta:     'Placeholder: concierge / booking.',
-      couponEyebrow: 'Explore reward',
-      couponTitle: 'You unlocked a coupon!',
-      couponDesc: 'Fill in your details, preview the message, then open WhatsApp to redeem.',
+      couponEyebrow: 'Returning guest offer',
+      couponTitle: 'Airport transfer discount unlocked',
+      couponDesc: 'Standard airport transfer is ¥15,000. As a returning guest, you get ¥3,000 off—now from ¥12,000 per transfer.',
+      couponOfferOrigLbl: 'Standard price',
+      couponOfferOffLbl: 'Guest discount',
+      couponOfferDealLbl: 'Now from',
+      couponOfferNote: 'Next: fill in details and redeem via WhatsApp',
       couponClose: 'Close',
       couponEntry: 'My coupon',
       couponLName: 'Name *',
@@ -1323,7 +1364,7 @@
       couponLPax: 'Guests',
       couponPreviewTitle: 'WhatsApp Message Preview',
       couponPreviewHint: 'Enter your name to preview the message.',
-      couponSubmit: 'Redeem via WhatsApp',
+      couponSubmit: 'Claim offer',
       couponRedirecting: 'Redirecting…',
       exploreHint: 'Tap <strong>Dining, Bar & Experience</strong> (3 categories) to unlock a coupon',
       couponMsg: (code, hotel, client, name, date, pax) =>
@@ -1367,9 +1408,13 @@
       lAria:    '表示言語',
       aBook:    'プレースホルダー：予約。',
       aCta:     'プレースホルダー：窓口。',
-      couponEyebrow: '探索ボーナス',
-      couponTitle: 'クーポンを獲得しました！',
-      couponDesc: '情報を入力してプレビューを確認後、WhatsApp で受け取ります。',
+      couponEyebrow: 'ご予約のお客様限定',
+      couponTitle: '空港送迎の特別割引を解除しました',
+      couponDesc: '通常の空港送迎は ¥15,000。ご予約のお客様限定で ¥3,000 オフ——最低 ¥12,000 で空港送迎を1回ご利用いただけます。',
+      couponOfferOrigLbl: '通常料金',
+      couponOfferOffLbl: 'お客様限定割引',
+      couponOfferDealLbl: '今なら最低',
+      couponOfferNote: '次の画面で情報を入力し、WhatsApp で受け取ります',
       couponClose: '閉じる',
       couponEntry: 'マイクーポン',
       couponLName: 'お名前 *',
@@ -1377,7 +1422,7 @@
       couponLPax: '人数',
       couponPreviewTitle: 'WhatsApp メッセージプレビュー',
       couponPreviewHint: 'お名前を入力すると送信内容をプレビューできます。',
-      couponSubmit: 'WhatsApp で受け取る',
+      couponSubmit: '特典を受け取る',
       couponRedirecting: '移動中…',
       exploreHint: '<strong>レストラン・バー・体験</strong>の3カテゴリを開くとクーポンを獲得できます',
       couponMsg: (code, hotel, client, name, date, pax) =>
@@ -1596,22 +1641,14 @@
     document.getElementById('coupon-eyebrow').textContent = u.couponEyebrow;
     document.getElementById('coupon-title').textContent = u.couponTitle;
     document.getElementById('coupon-desc').textContent = u.couponDesc;
+    document.getElementById('coupon-offer-orig-lbl').textContent = u.couponOfferOrigLbl;
+    document.getElementById('coupon-offer-off-lbl').textContent = u.couponOfferOffLbl;
+    document.getElementById('coupon-offer-deal-lbl').textContent = u.couponOfferDealLbl;
+    document.getElementById('coupon-offer-note').textContent = u.couponOfferNote;
     document.getElementById('coupon-code-el').textContent = EXPLORE_COUPON;
-    document.getElementById('coupon-l-name').textContent = u.couponLName;
-    document.getElementById('coupon-l-date').textContent = u.couponLDate;
-    document.getElementById('coupon-l-pax').textContent = u.couponLPax;
-    document.getElementById('coupon-preview-title').textContent = u.couponPreviewTitle;
-    document.getElementById('coupon-preview-hint').textContent = u.couponPreviewHint;
     $couponClose.setAttribute('aria-label', u.couponClose);
-    $couponSubmitText.dataset.redirecting = '';
     $couponSubmitText.textContent = u.couponSubmit;
-    $couponSubmit.disabled = !couponFormComplete();
-    if (!$couponDate.value) {
-      const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
-      $couponDate.value = tmr.toISOString().slice(0, 10);
-    }
-    if (!$couponPax.value) $couponPax.value = '2';
-    updateCouponPreview();
+    $couponSubmit.disabled = false;
   }
 
   function goCouponPage() {
@@ -1624,8 +1661,11 @@
   }
 
   function showCouponToast() {
-    /* 跳转版：不弹窗，改开独立领券页 */
-    goCouponPage();
+    renderCouponToast();
+    trackExploreFunnel('explore-popup', 'offer-toast');
+    $couponToast.classList.add('open');
+    $couponToast.setAttribute('aria-hidden', 'false');
+    syncCouponEntry();
   }
 
   function hideCouponToast() {
@@ -1649,7 +1689,7 @@
     activeCat = EXPLORE_DONE_CAT;
     renderChips();
     renderCards();
-    goCouponPage();
+    showCouponToast();
   }
 
   $couponClose.addEventListener('click', hideCouponToast);
@@ -1659,33 +1699,10 @@
     }
     showCouponToast();
   });
-  ['input', 'change'].forEach(ev => {
-    $couponName.addEventListener(ev, updateCouponPreview);
-    $couponDate.addEventListener(ev, updateCouponPreview);
-    $couponPax.addEventListener(ev, updateCouponPreview);
-  });
   $couponSubmit.addEventListener('click', () => {
-    if (!couponFormComplete()) {
-      $couponName.classList.add('err');
-      $couponName.focus();
-      return;
-    }
-    const u = L();
-    const msg = buildCouponMsg();
-    /* 与门店预约一致：wa.me 预填文案跳转 */
-    const url = `https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`;
-    if (typeof __csTrack === 'function') {
-      __csTrack({ action: 'click', btn: 'coupon-wa', label: EXPLORE_COUPON });
-    }
     $couponSubmit.disabled = true;
-    $couponSubmitText.dataset.redirecting = '1';
-    $couponSubmitText.textContent = u.couponRedirecting;
-    setTimeout(() => {
-      window.open(url, '_blank');
-      $couponSubmitText.dataset.redirecting = '';
-      $couponSubmitText.textContent = u.couponSubmit;
-      $couponSubmit.disabled = !couponFormComplete();
-    }, 400);
+    $couponSubmitText.textContent = L().couponRedirecting;
+    goCouponPage();
   });
 
   /* ── 排序按钮 ────────────────────────────────────────── */
