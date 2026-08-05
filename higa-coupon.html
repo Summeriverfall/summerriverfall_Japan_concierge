@@ -143,8 +143,18 @@
     }
     .offer-row .val {
       flex-shrink: 0;
-      font-weight: 800; font-size: 1.12rem; color: #b45309;
+      display: flex; flex-direction: column; align-items: flex-end; gap: .1rem;
       font-variant-numeric: tabular-nums;
+    }
+    .offer-row .val .was {
+      font-size: .7rem; font-weight: 650; color: var(--muted);
+      text-decoration: line-through;
+    }
+    .offer-row .val .now {
+      font-weight: 800; font-size: 1.12rem; color: #b45309;
+    }
+    .offer-row .val .off {
+      font-size: .65rem; font-weight: 750; color: var(--brand);
     }
     .code {
       display: flex; align-items: center; justify-content: center;
@@ -218,14 +228,22 @@
             <span class="city" id="offer-osaka-city">大阪</span>
             <span class="sub" id="offer-osaka-sub">机场接送</span>
           </span>
-          <span class="val">¥12,000</span>
+          <span class="val">
+            <span class="was">¥15,000</span>
+            <span class="now">¥12,000</span>
+            <span class="off" id="offer-osaka-off">优惠 ¥3,000</span>
+          </span>
         </div>
         <div class="offer-row">
           <span class="route">
             <span class="city" id="offer-kyoto-city">京都</span>
             <span class="sub" id="offer-kyoto-sub">机场接送</span>
           </span>
-          <span class="val">¥22,000</span>
+          <span class="val">
+            <span class="was">¥25,000</span>
+            <span class="now">¥22,000</span>
+            <span class="off" id="offer-kyoto-off">优惠 ¥3,000</span>
+          </span>
         </div>
       </div>
       <div class="code" id="code">KYOTO3CAT</div>
@@ -275,11 +293,12 @@
         back: '← 返回体验页',
         eyebrow: '老客专属',
         title: '接送机专属报价',
-        desc: '作为预约客户，可按行程选择大阪或京都机场接送。填写信息后通过 WhatsApp 领取。',
+        desc: '作为预约客户，大阪 / 京都接送机各享 ¥3,000 优惠。填写信息后通过 WhatsApp 领取。',
         offerOsakaCity: '大阪',
         offerOsakaSub: '机场接送',
         offerKyotoCity: '京都',
         offerKyotoSub: '机场接送',
+        offerOff: '优惠 ¥3,000',
         lName: '姓名 *',
         lDate: '日期',
         lPax: '人数',
@@ -295,11 +314,12 @@
         back: '← Back to experiences',
         eyebrow: 'Returning guest offer',
         title: 'Airport transfer rates',
-        desc: 'As a returning guest, choose Osaka or Kyoto airport transfer at the rates below. Fill in your details to redeem via WhatsApp.',
+        desc: 'As a returning guest, Osaka and Kyoto transfers each include ¥3,000 off. Fill in your details to redeem via WhatsApp.',
         offerOsakaCity: 'Osaka',
         offerOsakaSub: 'Airport transfer',
         offerKyotoCity: 'Kyoto',
         offerKyotoSub: 'Airport transfer',
+        offerOff: '¥3,000 off',
         lName: 'Name *',
         lDate: 'Date',
         lPax: 'Guests',
@@ -315,11 +335,12 @@
         back: '← 体験ページへ戻る',
         eyebrow: 'ご予約のお客様限定',
         title: '空港送迎の特別料金',
-        desc: 'ご予約のお客様は、大阪または京都の空港送迎を下記料金でご利用いただけます。情報を入力して WhatsApp で受け取ります。',
+        desc: 'ご予約のお客様は、大阪・京都の空港送迎がそれぞれ ¥3,000 オフです。情報を入力して WhatsApp で受け取ります。',
         offerOsakaCity: '大阪',
         offerOsakaSub: '空港送迎',
         offerKyotoCity: '京都',
         offerKyotoSub: '空港送迎',
+        offerOff: '¥3,000 オフ',
         lName: 'お名前 *',
         lDate: '日付',
         lPax: '人数',
@@ -399,6 +420,8 @@
       document.getElementById('offer-osaka-sub').textContent = u.offerOsakaSub;
       document.getElementById('offer-kyoto-city').textContent = u.offerKyotoCity;
       document.getElementById('offer-kyoto-sub').textContent = u.offerKyotoSub;
+      document.getElementById('offer-osaka-off').textContent = u.offerOff;
+      document.getElementById('offer-kyoto-off').textContent = u.offerOff;
       document.getElementById('l-name').textContent = u.lName;
       document.getElementById('l-date').textContent = u.lDate;
       document.getElementById('l-pax').textContent = u.lPax;

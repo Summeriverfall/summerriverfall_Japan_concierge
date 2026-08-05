@@ -478,8 +478,18 @@
     }
     .coupon-offer-row .val {
       flex-shrink: 0;
-      font-weight: 800; font-size: 1.05rem; color: #b45309;
+      display: flex; flex-direction: column; align-items: flex-end; gap: .1rem;
       font-variant-numeric: tabular-nums; letter-spacing: .02em;
+    }
+    .coupon-offer-row .val .was {
+      font-size: .68rem; font-weight: 650; color: var(--muted);
+      text-decoration: line-through;
+    }
+    .coupon-offer-row .val .now {
+      font-weight: 800; font-size: 1.05rem; color: #b45309;
+    }
+    .coupon-offer-row .val .off {
+      font-size: .62rem; font-weight: 750; color: var(--brand);
     }
     .coupon-code {
       display: flex; align-items: center; justify-content: center;
@@ -1140,14 +1150,22 @@
           <span class="city" id="coupon-offer-osaka-city">大阪</span>
           <span class="sub" id="coupon-offer-osaka-sub">机场接送</span>
         </span>
-        <span class="val" id="coupon-offer-osaka-price">¥12,000</span>
+        <span class="val" id="coupon-offer-osaka-price">
+          <span class="was">¥15,000</span>
+          <span class="now">¥12,000</span>
+          <span class="off" id="coupon-offer-osaka-off">优惠 ¥3,000</span>
+        </span>
       </div>
       <div class="coupon-offer-row">
         <span class="route">
           <span class="city" id="coupon-offer-kyoto-city">京都</span>
           <span class="sub" id="coupon-offer-kyoto-sub">机场接送</span>
         </span>
-        <span class="val" id="coupon-offer-kyoto-price">¥22,000</span>
+        <span class="val" id="coupon-offer-kyoto-price">
+          <span class="was">¥25,000</span>
+          <span class="now">¥22,000</span>
+          <span class="off" id="coupon-offer-kyoto-off">优惠 ¥3,000</span>
+        </span>
       </div>
     </div>
     <div class="coupon-code" id="coupon-code-el"></div>
@@ -1310,11 +1328,12 @@
       aCta:     '占位：全局联系 / 预约。',
       couponEyebrow: '老客专属',
       couponTitle: '接送机专属报价已解锁',
-      couponDesc: '作为预约客户，可按行程选择大阪或京都机场接送。填写信息后即可通过 WhatsApp 领取。',
+      couponDesc: '作为预约客户，大阪 / 京都接送机各享 ¥3,000 优惠。填写信息后即可通过 WhatsApp 领取。',
       couponOfferOsakaCity: '大阪',
       couponOfferOsakaSub: '机场接送',
       couponOfferKyotoCity: '京都',
       couponOfferKyotoSub: '机场接送',
+      couponOfferOff: '优惠 ¥3,000',
       couponClose: '关闭',
       couponEntry: '我的优惠券',
       couponLName: '姓名 *',
@@ -1368,11 +1387,12 @@
       aCta:     'Placeholder: concierge / booking.',
       couponEyebrow: 'Returning guest offer',
       couponTitle: 'Airport transfer rates unlocked',
-      couponDesc: 'As a returning guest, choose Osaka or Kyoto airport transfer at the rates below. Fill in your details to redeem via WhatsApp.',
+      couponDesc: 'As a returning guest, Osaka and Kyoto transfers each include ¥3,000 off. Fill in your details to redeem via WhatsApp.',
       couponOfferOsakaCity: 'Osaka',
       couponOfferOsakaSub: 'Airport transfer',
       couponOfferKyotoCity: 'Kyoto',
       couponOfferKyotoSub: 'Airport transfer',
+      couponOfferOff: '¥3,000 off',
       couponClose: 'Close',
       couponEntry: 'My coupon',
       couponLName: 'Name *',
@@ -1426,11 +1446,12 @@
       aCta:     'プレースホルダー：窓口。',
       couponEyebrow: 'ご予約のお客様限定',
       couponTitle: '空港送迎の特別料金を解除しました',
-      couponDesc: 'ご予約のお客様は、大阪または京都の空港送迎を下記料金でご利用いただけます。情報を入力して WhatsApp で受け取ります。',
+      couponDesc: 'ご予約のお客様は、大阪・京都の空港送迎がそれぞれ ¥3,000 オフです。情報を入力して WhatsApp で受け取ります。',
       couponOfferOsakaCity: '大阪',
       couponOfferOsakaSub: '空港送迎',
       couponOfferKyotoCity: '京都',
       couponOfferKyotoSub: '空港送迎',
+      couponOfferOff: '¥3,000 オフ',
       couponClose: '閉じる',
       couponEntry: 'マイクーポン',
       couponLName: 'お名前 *',
@@ -1692,6 +1713,8 @@
     document.getElementById('coupon-offer-osaka-sub').textContent = u.couponOfferOsakaSub;
     document.getElementById('coupon-offer-kyoto-city').textContent = u.couponOfferKyotoCity;
     document.getElementById('coupon-offer-kyoto-sub').textContent = u.couponOfferKyotoSub;
+    document.getElementById('coupon-offer-osaka-off').textContent = u.couponOfferOff;
+    document.getElementById('coupon-offer-kyoto-off').textContent = u.couponOfferOff;
     document.getElementById('coupon-code-el').textContent = currentCouponCode();
     document.getElementById('coupon-l-name').textContent = u.couponLName;
     document.getElementById('coupon-l-date').textContent = u.couponLDate;
