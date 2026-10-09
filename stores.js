@@ -57,7 +57,7 @@ window.PROPERTIES = [
 window.STORES = [
   {
     "id": "s8",
-    "cat": "spa",
+    "cat": "beauty",
     "orderAll": 14,
     "orderCat": 6,
     "rec": false,

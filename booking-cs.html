@@ -1459,7 +1459,7 @@
   }
   /* 接送机等全区域通用服务 */
   function isSharedStore(store) {
-    return store.cat === 'transfer';
+    return store.cat === 'transfer' || store.cat === 'beauty';
   }
   function detectRegionFromCoords(lat, lon) {
     const dOsaka = havKm({ lat, lon }, { lat: 34.6937, lon: 135.5023 });
