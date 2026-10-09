@@ -3304,6 +3304,41 @@ window.STORES = [
       "gion": { "zh": "电车约171分", "en": "~171 min by train", "ja": "電車約171分" },
       "higashiyama": { "zh": "电车约174分", "en": "~174 min by train", "ja": "電車約174分" }
     }
+  },
+  {
+    "id": "s111",
+    "cat": "beauty",
+    "orderAll": 157,
+    "orderCat": 7,
+    "rec": false,
+    "img": "",
+    "storeCoords": { "lat": 35.0020513, "lon": 135.7577766 },
+    "zh": {
+      "name": "ALUSTA",
+      "area": "四条乌丸",
+      "desc": "京都四条乌丸的巴西热蜡脱毛沙龙。阪急乌丸站步行约2分钟，地铁四条站步行约1分钟。建议提前预约。",
+      "tags": ["京都", "热蜡脱毛", "预约制"],
+      "hours": "9:30–21:00"
+    },
+    "en": {
+      "name": "ALUSTA",
+      "area": "Shijo Karasuma",
+      "desc": "Brazilian wax salon at Shijo Karasuma, Kyoto. About 2 min walk from Hankyu Karasuma Station and 1 min from subway Shijo Station. Reservations recommended.",
+      "tags": ["Kyoto", "Waxing", "Reservations"],
+      "hours": "9:30–21:00"
+    },
+    "ja": {
+      "name": "ALUSTA",
+      "area": "四条烏丸",
+      "desc": "京都・四条烏丸のブラジリアンワックス脱毛サロン。阪急烏丸駅徒歩約2分、地下鉄四条駅徒歩約1分。ご予約をおすすめします。",
+      "tags": ["京都", "ワックス脱毛", "要予約"],
+      "hours": "9:30–21:00"
+    },
+    "fromStay": {
+      "higashiyama": { "zh": "步行约34分", "en": "~34 min walk", "ja": "徒歩約34分" },
+      "gion": { "zh": "步行约24分", "en": "~24 min walk", "ja": "徒歩約24分" },
+      "arashiyama": { "zh": "电车约25分", "en": "~25 min by train", "ja": "電車約25分" }
+    }
   }
 
 ];

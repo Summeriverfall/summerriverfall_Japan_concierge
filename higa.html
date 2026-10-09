@@ -858,7 +858,7 @@
   /* ── 配置 ──────────────────────────────────────────── */
   const LANGS      = ['zh','en','ja'];
   const LANG_LBL   = { zh:'中文', en:'EN', ja:'日本語' };
-  const CAT_IDS    = ['all','spa','dining','transfer','whisky','kimono'];
+  const CAT_IDS    = ['all','spa','beauty','dining','transfer','whisky','kimono'];
   // 从 stores.js 的 window.PROPERTIES 动态派生，fallback 兼容旧版
   const _PROPS_SRC  = window.PROPERTIES || [
     { id:'higashiyama', zh:'東山民宿', en:'Higashiyama Guesthouse', ja:'東山民宿', lat:35.01021, lon:135.77801 },
@@ -930,7 +930,7 @@
       lead:     '按摩疗愈、京都料理、机场接送、威士忌品鉴与和服体验，均由我们严选合作，可代为预约。',
       dnote:    p => p ? `以下距离以 <strong>${p}</strong> 为出发点估算` : '扫描房间内二维码后可自动显示至各店距离',
       searchPh: '搜索按摩、餐厅、接送机…',
-      cats:     { all:'全部', spa:'SPA', dining:'餐厅', transfer:'接送机', whisky:'酒吧', kimono:'体验' },
+      cats:     { all:'全部', spa:'SPA', beauty:'美容', dining:'餐厅', transfer:'接送机', whisky:'酒吧', kimono:'体验' },
       sortLbl:  '排序',
       sortDefault: '推荐',
       sortStay: '离所选位置最近',
@@ -969,7 +969,7 @@
       lead:     'Massage, Kyoto dining, airport transfers, whisky tastings, and kimono—all handpicked and bookable through us.',
       dnote:    p => p ? `Distances estimated from <strong>${p}</strong>` : 'Scan the in-room QR code to see distances from your guesthouse',
       searchPh: 'Search massage, dining, transfer…',
-      cats:     { all:'All', spa:'SPA', dining:'Dining', transfer:'Transfer', whisky:'Bar', kimono:'Experience' },
+      cats:     { all:'All', spa:'SPA', beauty:'Beauty', dining:'Dining', transfer:'Transfer', whisky:'Bar', kimono:'Experience' },
       sortLbl:  'Sort',
       sortDefault: 'Featured',
       sortStay: 'Near selected location',
@@ -1008,7 +1008,7 @@
       lead:     'マッサージ、京料理、空港送迎、ウイスキー体験、着物レンタル。すべて厳選の提携先で、当社が手配します。',
       dnote:    p => p ? `<strong>${p}</strong> を出発点とした目安距離` : 'お部屋のQRコードをスキャンすると各店までの距離が表示されます',
       searchPh: 'マッサージ、食事、送迎を検索…',
-      cats:     { all:'すべて', spa:'SPA', dining:'レストラン', transfer:'送迎', whisky:'バー', kimono:'体験' },
+      cats:     { all:'すべて', spa:'SPA', beauty:'美容', dining:'レストラン', transfer:'送迎', whisky:'バー', kimono:'体験' },
       sortLbl:  '並び替え',
       sortDefault: 'おすすめ',
       sortStay: '選択位置から近い順',
