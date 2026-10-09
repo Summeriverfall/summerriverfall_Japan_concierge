@@ -3311,7 +3311,7 @@ window.STORES = [
     "orderAll": 157,
     "orderCat": 7,
     "rec": false,
-    "img": "",
+    "img": "images/alusta.jpg",
     "storeCoords": { "lat": 35.0020513, "lon": 135.7577766 },
     "zh": {
       "name": "ALUSTA",
